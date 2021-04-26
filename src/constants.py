@@ -12,3 +12,11 @@ FREESURFER_LABELS_FILES = {
 
 ABIDEII_PATH = "/media/tarek/D/Autism/Structural_MRI/AbideII_FreeSurfer"
 ABIDEI_PREPROC_PATH = "/media/tarek/D/Autism/Structural_MRI/Abide_Preprocessed_Dataset"
+
+DATA_DIR = {
+    'raw':'../data/raw',
+    'raw_1file' : '../data/raw_allInOneJson',
+    'feat_extract':'../data/feature_extraction',
+    'data_divisor':'../data/data_divisor',
+}
+
