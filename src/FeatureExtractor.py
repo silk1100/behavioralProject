@@ -11,6 +11,7 @@ import numpy as np
 import os
 import json
 import constants
+from utils import DataFixation
 
 
 class FeatureExtractor:
@@ -18,6 +19,8 @@ class FeatureExtractor:
         self.dir = fldr
         self.data_ = pd.DataFrame(None)
         self._median_minus_plus_output_dir = "medianMinusPlus"
+        self._percentile_output_dir = "percentile"
+
         self.pheno_ = pd.DataFrame(None)
 
     def _attach_labels(self, pheno_file_dir:str = './ABIDEII_Composite_Phenotypic.csv'):
@@ -25,10 +28,19 @@ class FeatureExtractor:
         if len(self.data_) >= 1:
             pheno['subj_id'] = pheno['SITE_ID'] + '_' + pheno['SUB_ID'].astype(str)
             pheno['subj_id'] = pheno['subj_id'].apply(lambda x: x.replace('ABIDEII-', ""))
-            labels_table = pheno[['subj_id', 'DX_GROUP']]
-            labels_table.loc[labels_table['DX_GROUP'] == 2, 'DX_GROUP'] = 0
+            labels_table = pheno[['subj_id', 'SEX', 'AGE_AT_SCAN ', 'DX_GROUP']]
+
+            # Will follow the original phenotype csv convention to minimize bugs
+            # labels_table.loc[labels_table['DX_GROUP'] == 2, 'DX_GROUP'] = 0
+
+            dataf = DataFixation()
+            labels_table = dataf.remove_middle_1(labels_table, 'KKI')
+            labels_table = dataf.remove_middle_1(labels_table, 'U_MI')
+            labels_table = dataf.remove_middle_1(labels_table, 'SU_2')
+            labels_table = dataf.remove_middle_1(labels_table, 'OILH')
             labels_table.set_index('subj_id', inplace=True)
             self.data_ = self.data_.join(labels_table, how='inner')
+
         self.pheno_ = pheno
 
     def median_minus_plus_IQR(self, iqr:tuple=None) -> pd.DataFrame:
@@ -60,6 +72,8 @@ class FeatureExtractor:
             for morph_feat in subj_dict.keys():
                 brain_reg_dict = subj_dict[morph_feat]
                 for brain_reg in brain_reg_dict.keys():
+                    if 'unknown' in brain_reg:
+                        continue
                     feat_values = brain_reg_dict[brain_reg]
                     med = np.median(feat_values)
                     plow, phigh = np.percentile(feat_values, iqr)
@@ -77,9 +91,34 @@ class FeatureExtractor:
         self.data_.to_csv(os.path.join(output_dir, 'raw.csv'))
 
     def extract_percentiles(self, list_of_percentiles:list = None) -> pd.DataFrame:
-        pass
+        if list_of_percentiles is None:
+            list_of_percentiles = [x for x in range(20,100,20)]
+        jsn_files = [file for file in os.listdir(self.dir) if file.endswith('.json')]
+        for file in jsn_files:
+            full_path = os.path.join(self.dir, file)
+            with open(full_path, 'r') as f:
+                subj_dict = json.load(f)
+            subj_series = pd.Series()
+            for morph_feat in subj_dict.keys():
+                brain_reg_dict = subj_dict[morph_feat]
+                for brain_reg in brain_reg_dict.keys():
+                    feat_values = brain_reg_dict[brain_reg]
+                    agg_vals = np.percentile(feat_values, list_of_percentiles)
+                    for idx, val in enumerate(agg_vals):
+                        subj_series[f'{morph_feat}_{brain_reg}_PERC{list_of_percentiles[idx]}']=\
+                            val
+            subj_series.name = file.replace('.json','')
+            self.data_ = self.data_.append(subj_series)
+
+        if not os.path.isdir(constants.DATA_DIR['feat_extract']):
+            os.mkdir(constants.DATA_DIR['feat_extract'])
+        if not os.path.isdir(os.path.join(constants.DATA_DIR['feat_extract'], self._percentile_output_dir)):
+            os.mkdir(os.path.join(constants.DATA_DIR['feat_extract'], self._percentile_output_dir))
+        output_dir = os.path.join(constants.DATA_DIR['feat_extract'], self._percentile_output_dir)
+        self._attach_labels()
+        self.data_.to_csv(os.path.join(output_dir, 'raw.csv'))
 
 
 if __name__ == "__main__":
     fs = FeatureExtractor('../data/raw')
-    fs.median_minus_plus_IQR((20,80))
+    fs.median_minus_plus_IQR()
