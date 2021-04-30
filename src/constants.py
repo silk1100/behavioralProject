@@ -20,8 +20,10 @@ DATA_DIR = {
     'data_divisor':'../data/data_divisor',
     'medianMmedianP':'../data/feature_extraction/medianMinusPlus/raw.csv',
     'percentile':'../data/feature_extraction/percentile/raw.csv',
-    'pheno': '../data/feature_extraction/percentile/updated_pheno.csv'
+    'pheno': '../data/feature_extraction/percentile/updated_pheno.csv',
 }
+
+
 MAX_ITR = 1e9
 PARAM_GRID={
     'lSVM': {
@@ -93,6 +95,24 @@ SRS_SCORES_MAP = {
     'moderate':(66, 75),
     'sever':(76, 1000)
 }
+
+SRS_TEST_T = [
+    'SRS_TOTAL_T',
+    'SRS_AWARENESS_T',
+    'SRS_COGNITION_T',
+    'SRS_COMMUNICATION_T',
+    'SRS_MOTIVATION_T',
+    'SRS_MANNERISMS_T'
+]
+DATA_DIV_DIR = {
+    'SRS_TOTAL_T': '../data/data_divisor/srs_total',
+    'SRS_AWARENESS_T': '../data/data_divisor/srs_awar',
+    'SRS_COGNITION_T': '../data/data_divisor/srs_cog',
+    'SRS_COMMUNICATION_T': '../data/data_divisor/srs_comm',
+    'SRS_MOTIVATION_T': '../data/data_divisor/srs_mot',
+    'SRS_MANNERISMS_T': '../data/data_divisor/srs_manner',
+}
+
 
 TARGET = 'DX_GROUP'
 ASD = 1

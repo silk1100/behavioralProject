@@ -10,9 +10,12 @@ The SRS T scores have a range: 59 or below is TD/normal. 60-65 is mild, 66-75 is
 Your data looks like that spread holds true.
 "
 """
+import os.path
+
 import pandas as pd
 import numpy as np
 from constants import DATA_DIR, TARGET, ASD, TD
+import constants
 
 
 class DataDivisor:
@@ -26,6 +29,7 @@ class DataDivisor:
         self.report_type = behavioral
 
         self.behavioral_columns_ = []
+        self._get_behavioral_columns()
 
     def _get_behavioral_columns(self):
         for col in self.df_pheno.columns:
@@ -42,8 +46,28 @@ class DataDivisor:
         :param behavioral_type: str
         :return: pd.DataFrame
         """
-        self.df_behav = self.df_pheno[self.behavioral_columns_]
+        def divisor(test_val):
+            for key, val in constants.SRS_SCORES_MAP.items():
+                if val[0]<=test_val<=val[1]:
+                    return key
+            return None
+
+        # Currently we are only using the *_T score
+        used_behav_rep = []
+        for col in self.behavioral_columns_:
+            if col.endswith('_T'):
+                used_behav_rep.append(col)
+        self.df_behav = self.df_pheno[used_behav_rep]
+        updated_df = self.df.join(self.df_behav, how='inner')
+        for srs_test in constants.SRS_TEST_T:
+            df = updated_df.loc[:, self.df.columns.tolist()+[srs_test]]
+            df[f'categories_{srs_test.split("_")[1]}'] = df[srs_test].apply(divisor)
+            if not os.path.isdir(constants.DATA_DIV_DIR[srs_test]):
+                os.mkdir(constants.DATA_DIV_DIR[srs_test])
+            df.to_csv(os.path.join(constants.DATA_DIV_DIR[srs_test],f'{srs_test}.csv'),
+                                   index_label='subj_id')
         x = 0
+
 
 if __name__ == '__main__':
     df = pd.read_csv(DATA_DIR['medianMmedianP'], index_col=0)
