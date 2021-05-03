@@ -66,7 +66,50 @@ class DataDivisor:
                 os.mkdir(constants.DATA_DIV_DIR[srs_test])
             df.to_csv(os.path.join(constants.DATA_DIV_DIR[srs_test],f'{srs_test}.csv'),
                                    index_label='subj_id')
-        x = 0
+
+    def _validity_srs_test_type(self, srs_test_type:str) -> tuple:
+        file_path = None
+        correct_srs_test_type = srs_test_type
+        if srs_test_type in constants.DATA_DIV_DIR:
+            file_path = os.path.join(constants.DATA_DIV_DIR[srs_test_type], f'{srs_test_type}.csv')
+
+        elif srs_test_type in constants.SRS_TEST_NAMES_MAP:
+            file_path = os.path.join(
+                constants.DATA_DIV_DIR[constants.SRS_TEST_NAMES_MAP[srs_test_type]],
+                f'{constants.SRS_TEST_NAMES_MAP[srs_test_type]}.csv')
+            correct_srs_test_type = constants.SRS_TEST_NAMES_MAP[srs_test_type]
+        else:
+            for srs_t in constants.SRS_TEST_NAMES_MAP[srs_test_type]:
+                if srs_test_type in srs_t:
+                    correct_srs_test_type = constants.SRS_TEST_NAMES_MAP[srs_test_type]
+                    file_path = os.path.join(
+                        constants.DATA_DIV_DIR[correct_srs_test_type],
+                        f'{correct_srs_test_type}.csv')
+                    break
+
+        if file_path is None:
+            raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR.keys())}')
+
+        return file_path, correct_srs_test_type
+
+    def _validate_severity_level(self, severity_level:str) -> bool:
+        if severity_level in constants.SEVERITY_LEVEL_AVAILABLE:
+            return True
+        return False
+
+    def get_group(self, srs_test_type:str, severity_level:str, age_group:tuple=None, gender:str=None)->pd.DataFrame:
+        try:
+            file_path, correct_srs_test_type = self._validity_srs_test_type(srs_test_type)
+        except Exception:
+            raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR.keys())}')
+
+        if not self._validate_severity_level(severity_level):
+            raise ValueError(f'severity level should be one of the following: {severity_level}')
+
+        df =  pd.read_csv(file_path, index_col='subj_id')
+        group_df = df[df[f'categories_{srs_test_type.split("_")[1]}'] == severity_level]
+
+        return group_df
 
 
 if __name__ == '__main__':

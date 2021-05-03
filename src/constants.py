@@ -1,3 +1,4 @@
+import numpy as np
 FREESURFER_FEATS_FILES = {
     'area': ['surf/lh.area', 'surf/rh.area'],
     'curv': ['surf/lh.curv', 'surf/rh.curv'],
@@ -20,13 +21,17 @@ DATA_DIR = {
     'data_divisor':'../data/data_divisor',
     'medianMmedianP':'../data/feature_extraction/medianMinusPlus/raw.csv',
     'percentile':'../data/feature_extraction/percentile/raw.csv',
-    'pheno': '../data/feature_extraction/percentile/updated_pheno.csv',
+    'pheno': '../data/updated_pheno.csv',
+}
+
+MODEL_DIR = {
+    'main': '../models'
 }
 
 
 MAX_ITR = 1e9
 PARAM_GRID={
-    'lSVM': {
+    'lsmv': {
         'penalty':['l1','l2'],
         'loss':['hinge','squared_hinge'],
         'C':[0.1,1,5, 10]
@@ -34,7 +39,13 @@ PARAM_GRID={
     'pagg': {
         'C':[0.1,1,5,10], 'n_iter_no_change':[1,5,10]
     },
-    'lg':{
+    'sgd':{
+        'loss':['modified_huber','squared_hinge','perceptron'],
+        'penalty':['l1','l2','elasticnet'],
+        'alpha': np.arange(0.1, 5, 0.1),
+        'l1_ratio': np.arange(0,1,0.05),
+    },
+    'lr':{
         'penalty': ['l1','l2','elasticnet','none'],
         'C':[0.1,1,5, 10],
         'solver':['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
@@ -48,10 +59,22 @@ PARAM_GRID={
         'reg_lambda':[0, 0.001, 0.5, 1,  10],
         'colsample_bytree': [0.6, 0.8, 1.0],
     },
+    'ridge':{
+            'alpha':np.arange(0.1, 5, 0.1),
+            'normalize':[True, False],
+        },
+    'knn': {
+        'n_neighbors':np.arange(1,70, 2),
+        'weights':['uniform','distance'],
+        'leaf_size':np.arange(10,150, 10),
+        'p':np.arange(1,7),
+        'metric':['identifier','euclidean','manhattan','chebyshev','minkowski',
+                  'wminkowski','seuclidean','mahalanobis']
+        },
     'GNB': {
 
     },
-    'Rf': {
+    'rf': {
         'n_estimators':[50, 100, 200, 500, 1000],
         'criterion':['gini','entropy'],
         'max_features':['auto','sqrt'],
@@ -60,7 +83,7 @@ PARAM_GRID={
         'bootstrap':[True,False]
 
     },
-    'SVC': {
+    'svm': {
         'C':[0.1,1,5, 10],
         'kernel':['poly','rbf','sigmoid'],
         'degree':[2,3,4,5,6],
@@ -112,7 +135,18 @@ DATA_DIV_DIR = {
     'SRS_MOTIVATION_T': '../data/data_divisor/srs_mot',
     'SRS_MANNERISMS_T': '../data/data_divisor/srs_manner',
 }
+SRS_TEST_NAMES_MAP = {
+    'comm':'SRS_COMMUNICATION_T',
+    'mot':'SRS_COMMUNICATION_T',
+    'cog':'SRS_COGNITION_T',
+    'awa':'SRS_AWARENESS_T',
+    'man':'SRS_MANNERISMS_T',
+    'tot':'SRS_TOTAL_T'
+}
 
+SEVERITY_LEVEL_AVAILABLE = [
+    'TD','mild','moderate','sever'
+]
 
 TARGET = 'DX_GROUP'
 ASD = 1
