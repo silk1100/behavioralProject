@@ -111,7 +111,9 @@ class DataDivisor:
 
         return group_df
 
-
+    def set_params(self, **params):
+        pass
+    
 if __name__ == '__main__':
     df = pd.read_csv(DATA_DIR['medianMmedianP'], index_col=0)
     df_p = pd.read_csv(DATA_DIR['pheno'], index_col='subj_id')

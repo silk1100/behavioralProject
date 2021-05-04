@@ -1,3 +1,5 @@
+import sklearn.base
+
 import constants
 import sklearn.base as base
 from sklearn.ensemble import RandomForestClassifier
@@ -93,23 +95,13 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
                                      n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose)
         return self.grid
 
-    def _set_key_val(self, key, val):
-        if key == 'n_iter':
-            self.n_iter = val
-        elif key == 'n_jobs':
-            self.n_jobs = val
-        elif key == 'cv':
-            self.cv = val
-        elif key == 'verbose':
-            self.verbose = val
-        elif key == 'hyper_search_type':
-            self.hyper_search_type = val
-        else:
-            raise ValueError(f'{key} is not found among the class variables')
 
     def set_params(self, **params):
-        for key, val in params:
-            self._set_key_val(key, val)
+        for key, val in params.items():
+            if key in self.__dict__.keys():
+                setattr(self, key, val)
+            else:
+                raise ValueError(f'{key} is not a valid CustomClassifier parameter')
         self._update_grid()
 
     def set_njobs(self, njobs):
@@ -128,9 +120,20 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         self.n_iter = iter
         self._update_grid()
 
-    def fit(self, X, y, **fit_params):
+    def _fit_single_est(self, X, y, **fit_params):
+        self.grid.fit(X, y)
+        return self.grid
+    def _fit_mult_est(self, X, y, **fit_params):
         self.set_params(fit_params)
         self.grid.fit(X, y)
+        return self.grid
+
+    def fit(self, X, y, **fit_params):
+        if isinstance(self.est, dict):
+            self.grid = self._fit_single_est(X, y, **fit_params)
+        elif isinstance(self.est, sklearn.base.ClassifierMixin):
+            self.grid = self._fit_mult_est(X, y, **fit_params)
+
         return self
 
     def predict(self, X):
