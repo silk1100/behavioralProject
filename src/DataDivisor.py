@@ -19,8 +19,9 @@ import constants
 
 
 class DataDivisor:
-    def __init__(self, data: pd.DataFrame, phenofile: pd.DataFrame, behavioral: str):
-        self.df = data
+    FEATURE_REPR = ['medianMmedianP', 'percentile'] # Same keys as those were found in constants.py
+    def __init__(self, data: pd.DataFrame=None, phenofile: pd.DataFrame=None, behavioral: str=None):
+        self.df = self._handle_data_input(data)
 
         self.df_pheno = phenofile
         if 'subj_id' in self.df_pheno.columns:
@@ -29,7 +30,46 @@ class DataDivisor:
         self.report_type = behavioral
 
         self.behavioral_columns_ = []
+
         self._get_behavioral_columns()
+
+    def _handle_pheno_input(self, pheno):
+        """
+        Handling pheno as a parameter passed to the constructor
+        :return:
+        """
+        if pheno is None:
+            df = pd.read_csv(constants.DATA_DIR['pheno'])
+        elif isinstance(pheno, pd.DataFrame):
+                df = pheno
+        else:
+            raise TypeError(f'pheno can be either None or dataframe')
+
+        return df
+
+    def _handle_data_input(self, data):
+        """
+        Handling data as a parameter passed to the constructor
+        :return:
+        """
+        if data is None:
+            print('medianMmedianP is used as a default since no data is passed')
+            df = pd.read_csv(constants.DATA_DIR['medianMmedianP'])
+        else:
+            if isinstance(data, pd.DataFrame):
+                df = data
+            elif isinstance(data, str):
+                if data in self.FEATURE_REPR[0]:
+                    file_path = constants.DATA_DIR['medianMmedianP']
+                elif data in self.FEATURE_REPR[1]:
+                    file_path = constants.DATA_DIR['percentile']
+                else:
+                    raise ValueError(f'string represtation of data should be one of the following: {self.FEATURE_REPR}')
+                df = pd.read_csv(file_path)
+            else:
+                raise TypeError(f'{data} is expected to be the feature data frame, str to the type of features'
+                                f'{self.FEATURE_REPR}')
+        return df
 
     def _get_behavioral_columns(self):
         for col in self.df_pheno.columns:
@@ -52,13 +92,14 @@ class DataDivisor:
                     return key
             return None
 
-        # Currently we are only using the *_T score
+        # Currently we are only using the *_T score (total)
         used_behav_rep = []
         for col in self.behavioral_columns_:
             if col.endswith('_T'):
                 used_behav_rep.append(col)
         self.df_behav = self.df_pheno[used_behav_rep]
         updated_df = self.df.join(self.df_behav, how='inner')
+
         for srs_test in constants.SRS_TEST_T:
             df = updated_df.loc[:, self.df.columns.tolist()+[srs_test]]
             df[f'categories_{srs_test.split("_")[1]}'] = df[srs_test].apply(divisor)
@@ -104,15 +145,19 @@ class DataDivisor:
             raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR.keys())}')
 
         if not self._validate_severity_level(severity_level):
-            raise ValueError(f'severity level should be one of the following: {severity_level}')
+            raise ValueError(f'severity level should be one of the following: {constants.SEVERITY_LEVEL_AVAILABLE}')
 
         df =  pd.read_csv(file_path, index_col='subj_id')
-        group_df = df[df[f'categories_{srs_test_type.split("_")[1]}'] == severity_level]
+        group_df = df[df[f'categories_{correct_srs_test_type.split("_")[1]}'] == severity_level]
 
         return group_df
 
     def set_params(self, **params):
-        pass
+        for key, val in params.items():
+            if key in self.__dict__.keys():
+                setattr(self, key, val)
+            else:
+                raise KeyError(f'{key} is not a valid parameter')
     
 if __name__ == '__main__':
     df = pd.read_csv(DATA_DIR['medianMmedianP'], index_col=0)
@@ -120,5 +165,6 @@ if __name__ == '__main__':
 
     divisor = DataDivisor(df, df_p, 'srs')
     df = divisor.divide()
-
+    # df = divisor.get_group('comm','mild')
+    x = 0
 

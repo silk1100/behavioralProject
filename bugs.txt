@@ -1,0 +1,15 @@
+** DataDivisor
+	DataDivisor main function
+	*	divisor = DataDivisor(df, df_p, 'srs')
+   	        df = divisor.divide()
+     	        df = divisor.get_group('comm','mild')
+		len(df) = 41
+	
+	Running Ipython in (D:\phd\codes\behavioralProject\data\feature_extraction\medianMinusPlus) while reading the phenotype file from 
+	(D:\PhD\codes\behavioralProject\data)
+	*	df = pd.read_csv('raw.csv', index_col='subj_id')
+	*	comm = df['SRS_COMMUNICATION_T']
+	*	comm_nona = comm.dropna()
+	*	len(comm_nona[(comm_nona['SRS_COMMUNICATION_T']>=60)&(comm_nona['SRS_COMMUNICATION_T']<=65)]) = 50
+
+	* Both values are expected to be the same.

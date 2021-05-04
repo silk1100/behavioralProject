@@ -16,7 +16,7 @@ class Experiment:
         self.DD_age_group = None
         self.DD_gender = None
         self.DD_divide_data = False
-        self.DD_obj = DataDivisor.DataDivisor()
+        self._DD_obj = DataDivisor.DataDivisor()
 
         # Featureselection parameters
         self.FS_est = None
@@ -26,7 +26,7 @@ class Experiment:
         self.FS_verbose = None
         self.FS_step = None
         self.FS_min_feat_to_select = None
-        self.FS_obj = FeatureSelection.FeatureSelector()
+        self._FS_obj = FeatureSelection.FeatureSelector()
 
         # Classifier Params
         self.ML_est = None
@@ -37,12 +37,19 @@ class Experiment:
         self.ML_hyper_select_typer = None
         self.ML_agg_models = None # Only used when ML_set is a list of classifier keys
         self.ML_n_iter = None # Only used when hyper parameter select is randomized
-        self.ML_obj = Classifers.CustomClassifier()
+        self._ML_obj = Classifers.CustomClassifier()
 
         print("I am constructor")
 
     def run(self):
-        pass
+        DD_params_dict = {}
+        FS_params_dict = {}
+        ML_params_dict = {}
+        for key, val in self.__dict__.items():
+            if key.startswith('DD'):
+
+
+        self._DD_obj.set_params()
 
     def set_params(self, **params):
         for key, val in params.items():
