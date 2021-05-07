@@ -3,15 +3,17 @@ import FeatureSelection
 import Classifers
 import constants
 import dill
-
+import ujson as json
 
 class Experiment:
-    def __init__(self):
+    def __init__(self, **experiment_params):
+        if len(experiment_params)> 1:
+            self._parse_exp_params(experiment_params)
         # Type of data to use
         self.data_repr = None
 
         # Data divisor parameters
-        self.DD_srs_type = 5
+        self.DD_srs_type = None
         self.DD_severity_group = None
         self.DD_age_group = None
         self.DD_gender = None
@@ -34,7 +36,7 @@ class Experiment:
         self.ML_scoring = None
         self.ML_n_jobs = None
         self.ML_verbose = None
-        self.ML_hyper_select_typer = None
+        self.ML_hyper_select_type = None
         self.ML_agg_models = None # Only used when ML_set is a list of classifier keys
         self.ML_n_iter = None # Only used when hyper parameter select is randomized
         self._ML_obj = Classifers.CustomClassifier()
@@ -50,6 +52,17 @@ class Experiment:
 
 
         self._DD_obj.set_params()
+
+    def _parse_exp_params(self, exp_params_dict):
+        for key, item in exp_params_dict:
+            if 'DD' == key:
+                DD_data_dict = item
+            elif 'FS' == key:
+                FS_data_dict = item
+            elif 'ML' == key:
+                ML_data_dict = item
+            else:
+                raise KeyError(f'Experiment parameters should be one of the following ["DD","FS","ML"]')
 
     def set_params(self, **params):
         for key, val in params.items():
@@ -76,7 +89,34 @@ class Experiment:
         pass
 
 if __name__ == "__main__":
-    experiment_1 = Experiment(arguments1)
+    params_experiment_1 = {
+        'DD':{
+            'srs_type': 'comm',
+            'severity_group': 'severity',
+            'age_group': None,
+            'divide_data': False,
+        },
+        'FS':{
+            'est': 'lsvm',
+            'cv': 5,
+            'scoring':'balanced_accuracy',
+            'n_jobs':3,
+            'verbose': 3,
+            'step':1,
+            'min_feat_to_select': 1,
+        },
+        'ML':{
+            'est':['xgb', 'lsvm', 'sgd','svm'],
+            'cv':5,
+            'scoring':'balanced_accuracy',
+            'n_jobs':3,
+            'verbose':3,
+            'hyper_select_type':'random',
+            'agg_models': False #(need to be implemented)
+            'n_iter':250
+        }
+    }
+    experiment_1 = Experiment()
     experiment_1.run()
     experiment_1.save_results()
     dill.dump(recurse=True)

@@ -13,3 +13,8 @@
 	*	len(comm_nona[(comm_nona['SRS_COMMUNICATION_T']>=60)&(comm_nona['SRS_COMMUNICATION_T']<=65)]) = 50
 
 	* Both values are expected to be the same.
+
+	[SOLVED!!] In the first case the operation is made on the dataframee of the join between the data and the second one is running only on the phenotype 
+		   file which has more subjects.
+
+********************************************************************************************************************************************************************************

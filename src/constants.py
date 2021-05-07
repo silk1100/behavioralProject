@@ -1,4 +1,12 @@
 import numpy as np
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from xgboost import XGBClassifier
+from sklearn.svm import LinearSVC, SVC
+from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, PassiveAggressiveClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
+
 FREESURFER_FEATS_FILES = {
     'area': ['surf/lh.area', 'surf/rh.area'],
     'curv': ['surf/lh.curv', 'surf/rh.curv'],
@@ -30,6 +38,20 @@ MODEL_DIR = {
 
 
 MAX_ITR = 1e9
+CLC_DICT = {
+    'lsvm': LinearSVC(max_iter=MAX_ITR),
+    'pagg': PassiveAggressiveClassifier(max_iter=MAX_ITR),
+    'lr': LogisticRegression(max_iter=MAX_ITR),
+    'sgd': SGDClassifier(max_iter=MAX_ITR),
+    'ridge':RidgeClassifier(max_iter=MAX_ITR),
+    'knn': KNeighborsClassifier(),
+    'xgb': XGBClassifier(),
+    'gnb': GaussianNB(),
+    'rf': RandomForestClassifier(),
+    'svm': SVC(max_iter=MAX_ITR),
+    'nn': MLPClassifier(max_iter=MAX_ITR),
+    'gradboost': GradientBoostingClassifier()
+}
 PARAM_GRID={
     'lsmv': {
         'penalty':['l1','l2'],
@@ -50,7 +72,7 @@ PARAM_GRID={
         'C':[0.1,1,5, 10],
         'solver':['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
     },
-    'XGB': {
+    'xgb': {
         'booster':['gbtree','gblinear','dart'],
         'learning_rate':[0.001, 0.01, 0.5, 1],
         'min_child_weight': [0.01, 0.5, 1, 10],
@@ -71,7 +93,7 @@ PARAM_GRID={
         'metric':['identifier','euclidean','manhattan','chebyshev','minkowski',
                   'wminkowski','seuclidean','mahalanobis']
         },
-    'GNB': {
+    'gnb': {
 
     },
     'rf': {
@@ -98,18 +120,33 @@ PARAM_GRID={
         'learning_rate': ['constant','adaptive'],
         'beta_1':[0, 0.001, 0.01, 0.1, 0.3, 0.5, 0.9],
         'beta_2':[0, 0.001, 0.01, 0.1, 0.3, 0.5, 0.9],
+    },
+    'gradboost':{
+        'loss':['ls','lad','huber','quantile'],
+        'learning_rate':np.arange(0.1, 5, 0.1),
+        'n_estimators':np.arange(100,500,50),
+        'subsample':np.arange(0.5,1, 0.1),
+        'criterion':['mse','friedman_mse'],
+        'min_samples_split':np.arange(2,10, 1),
+        'min_samples_leaf':np.arange(1,10,1),
+        'max_depth':np.arange(3,50,1),
+        'warm_start':[True],
     }
 }
 
 OUTPUT = {
-    'lSVM': '../data/models/lSVM',
-    'pagg': '../data/models/PAGG',
-    'lg':'../data/models/LR',
-    'XGB': '../data/models/XGB',
-    'GNB': '../data/models/GNB',
-    'Rf': '../data/models/RF',
-    'SVC': '../data/models/SVC',
-    'nn':'../data/models/nn'
+    'lsvm': '../data/models/lsvm',
+    'pagg': '../data/models/pagg',
+    'lr': '../data/models/lr',
+    'sgd': '../data/models/sgd',
+    'ridge':'../data/models/ridge',
+    'knn': '../data/models/knn',
+    'xgb': '../data/models/xgb',
+    'gnb': '../data/models/gnb',
+    'rf': '../data/models/rf',
+    'svm': '../data/models/svm',
+    'nn': '../data/models/nn',
+    'gradboost': '../data/models/gradboost'
 }
 
 SRS_SCORES_MAP = {

@@ -23,11 +23,11 @@ class DataDivisor:
     def __init__(self, data: pd.DataFrame=None, phenofile: pd.DataFrame=None, behavioral: str=None):
         self.df = self._handle_data_input(data)
 
-        self.df_pheno = phenofile
+        self.df_pheno = self._handle_pheno_input(phenofile)
         if 'subj_id' in self.df_pheno.columns:
             self.df_pheno.set_index('subj_id', inplace=True)
 
-        self.report_type = behavioral
+        self.report_type = behavioral if behavioral is not None else 'srs'
 
         self.behavioral_columns_ = []
 
@@ -44,6 +44,14 @@ class DataDivisor:
                 df = pheno
         else:
             raise TypeError(f'pheno can be either None or dataframe')
+
+        if 'subj_id' in df.columns:
+            df.set_index('subj_id', inplace=True)
+            if 'Unnamed: 0' in df.columns:
+                df.drop('Unnamed: 0', axis=1, inplace=True)
+        else:
+            df.set_index('Unnamed: 0', inplace=True)
+
 
         return df
 
@@ -69,6 +77,10 @@ class DataDivisor:
             else:
                 raise TypeError(f'{data} is expected to be the feature data frame, str to the type of features'
                                 f'{self.FEATURE_REPR}')
+        if 'subj_id' in df.columns:
+            df.set_index('subj_id', inplace=True)
+        else:
+            df.set_index('Unnamed: 0', inplace=True)
         return df
 
     def _get_behavioral_columns(self):
@@ -163,8 +175,9 @@ if __name__ == '__main__':
     df = pd.read_csv(DATA_DIR['medianMmedianP'], index_col=0)
     df_p = pd.read_csv(DATA_DIR['pheno'], index_col='subj_id')
 
-    divisor = DataDivisor(df, df_p, 'srs')
-    df = divisor.divide()
-    # df = divisor.get_group('comm','mild')
+    # divisor = DataDivisor(df, df_p, 'srs')
+    # df = divisor.divide()
+    divisor = DataDivisor()
+    df = divisor.get_group('comm','sever')
     x = 0
 
