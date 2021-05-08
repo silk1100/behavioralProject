@@ -10,8 +10,7 @@ The SRS T scores have a range: 59 or below is TD/normal. 60-65 is mild, 66-75 is
 Your data looks like that spread holds true.
 "
 """
-import os.path
-
+import os
 import pandas as pd
 import numpy as np
 from constants import DATA_DIR, TARGET, ASD, TD
@@ -28,7 +27,11 @@ class DataDivisor:
             self.df_pheno.set_index('subj_id', inplace=True)
 
         self.report_type = behavioral if behavioral is not None else 'srs'
-
+        self.srs_type=None
+        self.severity_group=None
+        self.age_group=None
+        self.gender = None
+        self.divide_data=False
         self.behavioral_columns_ = []
 
         self._get_behavioral_columns()
@@ -51,7 +54,6 @@ class DataDivisor:
                 df.drop('Unnamed: 0', axis=1, inplace=True)
         else:
             df.set_index('Unnamed: 0', inplace=True)
-
 
         return df
 
@@ -170,6 +172,9 @@ class DataDivisor:
                 setattr(self, key, val)
             else:
                 raise KeyError(f'{key} is not a valid parameter')
+
+    def run(self):
+        pass
     
 if __name__ == '__main__':
     df = pd.read_csv(DATA_DIR['medianMmedianP'], index_col=0)

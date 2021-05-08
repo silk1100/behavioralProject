@@ -47,10 +47,24 @@ class Experiment:
         if len(experiment_params)> 1:
             self._parse_exp_params(experiment_params)
             self._expr_params = experiment_params
-        print("I am constructor")
+
+    def _check_and_fill_expr_params(self):
+        for key, item in self.__dict__.items():
+            parts = key.split('_')
+            obj_type = parts[0]
+            if obj_type in self._expr_params:
+                self._expr_params[obj_type] = {'_'.join(parts[1:]):item}
+            else:
+                self._expr_params[obj_type]['_'.join(parts[1:])] = item
+
 
     def run(self):
-        self._DD_obj.set_params()
+        if self._expr_params is None:
+            self._check_and_fill_expr_params()
+        self._DD_obj.set_params(self._expr_params['DD'])
+        self._FS_obj.set_params(self._expr_params['FS'])
+        self._ML_obj.set_params(self._expr_params['ML'])
+        self._DD_ob
 
     def _validate_params(self, dd:dict, prefix:str=None):
         for key, val in dd.items():
