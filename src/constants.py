@@ -32,8 +32,10 @@ DATA_DIR = {
     'pheno': '../data/updated_pheno.csv',
 }
 
-MODEL_DIR = {
-    'main': '../models'
+
+MODELS_DIR = {
+    'main': '../models',
+    'config':'../models/exper_conf'
 }
 
 

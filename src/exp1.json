@@ -1,0 +1,32 @@
+{
+      "DD": {
+            "srs_type": "comm",
+            "severity_group": "severity",
+            "age_group": null,
+            "divide_data": false
+      },
+      "FS": {
+            "est": "lsvm",
+            "cv": 5,
+            "scoring": "balanced_accuracy",
+            "n_jobs": 3,
+            "verbose": 3,
+            "step": 1,
+            "min_feat_to_select": 1
+      },
+      "ML": {
+            "est": [
+                  "xgb",
+                  "lsvm",
+                  "sgd",
+                  "svm"
+            ],
+            "cv": 5,
+            "scoring": "balanced_accuracy",
+            "n_jobs": 3,
+            "verbose": 3,
+            "hyper_select_type": "random",
+            "agg_models": false,
+            "n_iter": 250
+      }
+}

@@ -58,13 +58,19 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         return self.rfe_.transform(X)
 
     def set_params(self, **params):
-        for key, val in params:
+        for key, val in params.tems():
             if key in self.__dict__.keys():
                 setattr(self, key, val)
             else:
                 raise ValueError(f'{key} is not a FeatureSelection valid parameter')
 
-    def get_support(self, indices=False):
+    def _get_support_mask(self):
+        if isinstance(self.rfe_, (list, tuple)):
+            return [rfe._get_support_mask() for rfe in self.rfe_]
+
+        return self.rfe_.get_support_mask()
+
+    def get_support_(self, indices=False):
         if isinstance(self.rfe_, (list, tuple)):
             return [rfe.get_support(indices) for rfe in self.rfe_]
 

@@ -1,5 +1,25 @@
 import pandas as pd
+import ujson as json
+import datetime
+import os
+import constants
 
+def get_time_stamp():
+    dt = datetime.datetime.now()
+    return dt.strftime("%Y%m%d_%H%M%S")
+
+def load_experiment(file):
+    with open(file, 'r') as f:
+        experiment = json.load(f)
+
+    return experiment
+
+def save_experiment_params(exp):
+    json_files = [f for f in os.listdir(constants.MODELS_DIR['config']) if f.endswith('.json')]
+    new_file = f'exp_{get_time_stamp()}.json'
+    with open(os.path.join(constants.MODELS_DIR['config'], new_file), 'w') as f:
+        json.dump(exp, f, indent=6)
+    return new_file, len(json_files)
 
 class DataFixation:
     def __init__(self):
