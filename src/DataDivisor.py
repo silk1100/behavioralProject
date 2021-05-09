@@ -161,8 +161,17 @@ class DataDivisor:
         if not self._validate_severity_level(severity_level):
             raise ValueError(f'severity level should be one of the following: {constants.SEVERITY_LEVEL_AVAILABLE}')
 
-        df =  pd.read_csv(file_path, index_col='subj_id')
+        df = pd.read_csv(file_path, index_col='subj_id')
         group_df = df[df[f'categories_{correct_srs_test_type.split("_")[1]}'] == severity_level]
+        if age_group is not None:
+            group_df = group_df[age_group[0]<=group_df['AGE_AT_SCAN']<=age_group[1]]
+        if gender is not None:
+            if gender in 'male' or gender.lower() == 'm' or gender == 1:
+                group_df = group_df[group_df['SEX']==1]
+            elif gender in 'female' or gender.lower() == 'f' or gender == 2:
+                group_df = group_df[group_df['SEX'] == 2]
+            else:
+                raise ValueError(f'Gender can be either (male/m/1) or (female/f/2)')
 
         return group_df
 
@@ -174,8 +183,16 @@ class DataDivisor:
                 raise KeyError(f'{key} is not a valid parameter')
 
     def run(self):
-        pass
-    
+        # self.srs_type=None
+        # self.severity_group=None
+        # self.age_group=None
+        # self.gender = None
+        # self.divide_data=False
+        if self.divide_data:
+            self.divide()
+        return self.get_group(self.srs_type, self.severity_group, self.age_group, self.gender)
+
+
 if __name__ == '__main__':
     df = pd.read_csv(DATA_DIR['medianMmedianP'], index_col=0)
     df_p = pd.read_csv(DATA_DIR['pheno'], index_col='subj_id')

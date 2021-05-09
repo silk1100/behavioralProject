@@ -57,14 +57,13 @@ class Experiment:
             else:
                 self._expr_params[obj_type]['_'.join(parts[1:])] = item
 
-
     def run(self):
         if self._expr_params is None:
             self._check_and_fill_expr_params()
         self._DD_obj.set_params(self._expr_params['DD'])
         self._FS_obj.set_params(self._expr_params['FS'])
         self._ML_obj.set_params(self._expr_params['ML'])
-        self._DD_ob
+        self._DD_obj.run()
 
     def _validate_params(self, dd:dict, prefix:str=None):
         for key, val in dd.items():
