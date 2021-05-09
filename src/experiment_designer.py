@@ -2,9 +2,10 @@ import constants
 import os
 
 exp_params = {
+        'data_repr': 'median',
         'DD':{
             'srs_type': 'comm',
-            'severity_group': 'severity',
+            'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,
         },
@@ -15,7 +16,7 @@ exp_params = {
             'n_jobs':3,
             'verbose': 3,
             'step':1,
-            'min_feat_to_select': 1,
+            'min_features_to_select': 1,
         },
         'ML':{
             'est': 'lsvm',#['xgb', 'lsvm', 'sgd','svm'],
@@ -23,8 +24,8 @@ exp_params = {
             'scoring':'balanced_accuracy',
             'n_jobs':3,
             'verbose':3,
-            'hyper_select_type':'random',
-            'agg_models': False, #(need to be implemented)
+            'hyper_search_type':'random',
+            #'agg_models': False, #(need to be implemented)
             'n_iter':250
         }
     }

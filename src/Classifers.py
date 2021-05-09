@@ -19,13 +19,14 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         'rf':['rf','random forest']
     }
 
-    def __int__(self, class_name: str, hyper_search_type:str='random', scoring:str='balanced_accuracy',
+    def __init__(self, class_name: str='nn', hyper_search_type:str='random', scoring:str='balanced_accuracy',
                 n_jobs=-1, cv=None, n_iter=200, verbose=3):
         self.est = None
         self._clc_key = None
         self.grid = None
         self.n_iter = n_iter
         self.n_jobs = n_jobs
+        self.scoring=scoring
         self.cv = cv
         self.verbose = verbose
         self.hyper_search_type = hyper_search_type
@@ -51,7 +52,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     def _get_est_key(self, class_name: str) -> tuple:
         est = None
         _clc_key = None
-        for key, items_list in self.AVAILABLE_CLASSIFIERS:
+        for key, items_list in self.AVAILABLE_CLASSIFIERS.items():
             if class_name in items_list:
                 est = constants.CLC_DICT[key]
                 _clc_key=key
@@ -60,17 +61,17 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
 
     def _set_single_grid(self, est, key):
         if self.hyper_search_type in 'random':
-            grid = RandomizedSearchCV(est, param_distributions=constants.PARAM_GRID[key],
+            grid = RandomizedSearchCV(est, param_distributions=constants.PARAM_GRID[key],scoring=self.scoring,
                                            n_iter=self.n_iter, n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose)
         elif self.hyper_search_type in 'exhaustive':
-            grid = GridSearchCV(est, param_grid=constants.PARAM_GRID[self.key],
+            grid = GridSearchCV(est, param_grid=constants.PARAM_GRID[self.key], scoring=self.scoring,
                                      n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose)
         else:
             raise ValueError("hyper_search_type can only be either random or exhaustive")
         return grid
 
     def _update_grid(self):
-        if not self._isMult_est:
+        if  self._isMult_est:
             self.grid = {}
             for key, est in self.est:
                 self.grid[key] = self._set_single_grid(est, key)
@@ -135,3 +136,8 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         else:
             result = self._mult_predict_proba(X)
         return result
+
+
+    def run(self, X, y):
+        self.fit(X, y)
+        return self.grid
