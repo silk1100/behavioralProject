@@ -18,7 +18,19 @@ FREESURFER_LABELS_FILES = {
     'a2009s': ['label/lh.aparc.a2009s.annot', 'label/rh.aparc.a2009s.annot'],
     'aparc': ['label/lh.aparc.annot', 'label/rh.aparc.annot']
 }
-
+AVAILABLE_CLASSIFIERS_MAP = {
+    'nn': ['nn', 'ANN', 'DNN'],
+    'svm': ['svc', 'svm'],
+    'lsvm': ['lsvm', 'linear svm', 'linsvm'],
+    'xgb': ['xgb', 'extragradientboost'],
+    'lr': ['logistic', 'logistic regression', 'lg'],
+    'gnb': ['naive_bayes', 'naive bayes', 'gaussian naive bayes', 'gnb'],
+    'pagg': ['pagg', 'passive_aggressive', 'passive aggressive', 'passagg', 'pasag'],
+    'ridge': ['ridge', 'rdg', 'rd'],
+    'sgd': ['sgd', 'stochastic gradient descend'],
+    'knn': ['knn', 'neighbors', 'k-nn'],
+    'rf': ['rf', 'random forest']
+}
 ABIDEII_PATH = "/media/tarek/D/Autism/Structural_MRI/AbideII_FreeSurfer"
 ABIDEI_PREPROC_PATH = "/media/tarek/D/Autism/Structural_MRI/Abide_Preprocessed_Dataset"
 

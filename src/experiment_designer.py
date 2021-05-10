@@ -7,7 +7,7 @@ exp_params = {
             'srs_type': 'comm',
             'severity_group': 'sever',
             'age_group': None,
-            'divide_data': False,
+            'divide_data': True,
         },
         'FS':{
             'est': 'lsvm',

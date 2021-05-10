@@ -33,6 +33,7 @@ class DataDivisor:
         self.gender = None
         self.divide_data=False
         self.behavioral_columns_ = []
+        self._df_selected_groups_ = None
 
         self._get_behavioral_columns()
 
@@ -83,6 +84,11 @@ class DataDivisor:
             df.set_index('subj_id', inplace=True)
         else:
             df.set_index('Unnamed: 0', inplace=True)
+
+        # Remove columns of unknown brain regions
+        cols2remove = [col for col in df.columns if ('lunknown' in col)or('runknown' in col)]
+        df.drop(cols2remove, axis=1, inplace=True)
+
         return df
 
     def _get_behavioral_columns(self):
@@ -162,6 +168,7 @@ class DataDivisor:
             raise ValueError(f'severity level should be one of the following: {constants.SEVERITY_LEVEL_AVAILABLE}')
 
         df = pd.read_csv(file_path, index_col='subj_id')
+        self._df_selected_groups_ = df
         group_df = df[df[f'categories_{correct_srs_test_type.split("_")[1]}'] == severity_level]
         if age_group is not None:
             group_df = group_df[age_group[0]<=group_df['AGE_AT_SCAN']<=age_group[1]]

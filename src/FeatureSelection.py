@@ -6,7 +6,7 @@ from sklearn import base
 
 class FeatureSelector(SelectorMixin, base.BaseEstimator):
     def __init__(self, est=constants.CLC_DICT['lsvm'], selector_method='rfe'):
-        self.est = est
+        self.est = self._handle_estimator(est)
         self.cv=StratifiedKFold(5, shuffle=True, random_state=123)
         self.scoring = 'accuracy'
         self.n_jobs = -1
@@ -19,6 +19,34 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         self.selected_feats_ = None
         self.scores_ = None
         self.all_feats_=None
+
+    def _handle_estimator(self, est):
+        fixed_est = None
+        if isinstance(est, str):
+            fixed_est = self._get_clc_from_str(est)
+        elif isinstance(est, base.ClassifierMixin):
+            fixed_est = est
+        elif isinstance(est, (list, tuple)):
+            clc_list = []
+            for e in est:
+                if isinstance(e, str):
+                    clc_list.append(self._get_clc_from_str(e))
+                elif isinstance(e, base.ClassifierMixin):
+                    clc_list.append(e)
+                else:
+                    raise ValueError(f'est should be a string with classifier name, list with classifier names, '
+                                     f'or classifier object')
+            fixed_est = clc_list
+        else:
+            raise ValueError(f'est should be a string with classifier name, list with classifier names, '
+                             f'or classifier object')
+        return fixed_est
+
+    def _get_clc_from_str(self, est_name:str) -> base.ClassifierMixin:
+        for key, list_names in constants.AVAILABLE_CLASSIFIERS_MAP.items():
+            if est_name in list_names:
+                return constants.CLC_DICT[key]
+        raise ValueError(f'estimator name should be one of the following {constants.AVAILABLE_CLASSIFIERS_MAP.keys()}')
 
     def fit(self, X, y, **rfecv_params):
         if isinstance(self.est, (list, tuple)):
@@ -62,7 +90,10 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
     def set_params(self, **params):
         for key, val in params.items():
             if key in self.__dict__.keys():
-                setattr(self, key, val)
+                if key == 'est':
+                    setattr(self, 'est', self._handle_estimator(val))
+                else:
+                    setattr(self, key, val)
             else:
                 raise ValueError(f'{key} is not a FeatureSelection valid parameter')
 
@@ -70,13 +101,13 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         if isinstance(self.rfe_, (list, tuple)):
             return [rfe._get_support_mask() for rfe in self.rfe_]
 
-        return self.rfe_.get_support_mask()
+        return self.rfe_.support_
 
     def get_support_(self, indices=False):
         if isinstance(self.rfe_, (list, tuple)):
-            return [rfe.get_support(indices) for rfe in self.rfe_]
+            return [rfe.support_ for rfe in self.rfe_]
 
-        return self.rfe_.get_support(indices)
+        return self.rfe_.support_
 
     def inverse_transform(self, X):
         if isinstance(self.rfe_, (list, tuple)):

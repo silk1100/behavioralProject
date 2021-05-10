@@ -80,36 +80,59 @@ class Experiment:
             # Sample within the age group of the more group
             if more_ASd:
                 # Sample from TD
-                pass
+                df_td = df_all[df_all['DX_GROUP']==2]
+                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
+                upper_bound = age_mean+age_std
+                lower_bound = age_mean-age_std
+                df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
+                df_added = df_target.sample(n=ASD_count-TD_count, random_state=1)
             else:
                 # Sample from ASD
-                pass
-
+                df_asd = df_all[df_all['DX_GROUP']==1]
+                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
+                upper_bound = age_mean+age_std
+                lower_bound = age_mean-age_std
+                df_target = df_asd.loc[(df_asd['AGE_AT_SCAN ']>=lower_bound) & (df_asd['AGE_AT_SCAN ']<=upper_bound),:]
+                df_added = df_target.sample(n=TD_count-ASD_count, random_state=1)
+            df_added = df_added[df_group.columns]
+            df = pd.concat([df_group, df_added], axis=0)
+        else:
+            df = df_group
+        return df
 
     def run(self):
         # Get the whole data
         if self.data_repr in 'percentile':
-            full_df = pd.read_csv(constants.DATA_DIR['percentile'])
+            full_df = pd.read_csv(constants.DATA_DIR['percentile'], index_col=0)
         elif self.data_repr in 'medianMmedianP':
-            full_df = pd.read_csv(constants.DATA_DIR['medianMmedianP'])
+            full_df = pd.read_csv(constants.DATA_DIR['medianMmedianP'], index_col=0)
         else:
             raise ValueError('Available data representations are ["percentile", "medianMmedianP"]')
 
         if self._expr_params is None:
-            self._check_and_fill_expr_params()
+            self._check_and_fill_expr_params( )
         self._DD_obj.set_params(**self._expr_params['DD'])
         self._FS_obj.set_params(**self._expr_params['FS'])
         self._ML_obj.set_params(**self._expr_params['ML'])
 
         group_df = self._DD_obj.run()
         # Make sure that the group_df contains TD and ASD
-        group_df['DX_GROUP'].value_counts()
+        group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df)
 
+        # Drop Age, SEX, behavioral report, and behavioral category before feature selection
+        age = group_df.pop('AGE_AT_SCAN ')
+        sex = group_df.pop('SEX')
+        _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)
+        srs_col = group_df.pop(srs_col_name)
+        srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
 
         Xselected, y = self._FS_obj.run(group_df)
-        self.FS_selected_feats_ =  self._FS_obj.selected_feats_
+        with open('./temp__FE_obj.p', 'wb') as f:
+            dill.dump(self._FS_obj, f, recurse=True)
 
-        self.ML_grid_ = self._ML_obj.run(Xselected, y)
+        # self.FS_selected_feats_ =  self._FS_obj.selected_feats_
+        #
+        # self.ML_grid_ = self._ML_obj.run(Xselected, y)
 
     def _validate_params(self, dd:dict, prefix:str=None):
         for key, val in dd.items():
