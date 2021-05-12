@@ -51,7 +51,7 @@ MODELS_DIR = {
 }
 
 
-MAX_ITR = 1e9
+MAX_ITR = int(1e9)
 CLC_DICT = {
     'lsvm': LinearSVC(max_iter=MAX_ITR),
     'pagg': PassiveAggressiveClassifier(max_iter=MAX_ITR),
@@ -67,7 +67,7 @@ CLC_DICT = {
     'gradboost': GradientBoostingClassifier()
 }
 PARAM_GRID={
-    'lsmv': {
+    'lsvm': {
         'penalty':['l1','l2'],
         'loss':['hinge','squared_hinge'],
         'C':[0.1,1,5, 10]

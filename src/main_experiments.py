@@ -1,5 +1,4 @@
 import os.path
-
 import DataDivisor
 import FeatureSelection
 import Classifers
@@ -13,6 +12,7 @@ import pandas as pd
 class Experiment:
     def __init__(self, **experiment_params):
         self._expr_params = None
+        self.stampfldr_ = None
 
         # Type of data to use
         self.data_repr = None
@@ -35,6 +35,7 @@ class Experiment:
         self.FS_min_features_to_select = None
         self._FS_obj = FeatureSelection.FeatureSelector()
         self.FS_selected_feats_ = None
+        self.FS_grid_scores_ = None
         # Classifier Params
         self.ML_est = None
         self.ML_cv = None
@@ -101,13 +102,12 @@ class Experiment:
         return df
 
     def run(self):
-        # Get the whole data
-        if self.data_repr in 'percentile':
-            full_df = pd.read_csv(constants.DATA_DIR['percentile'], index_col=0)
-        elif self.data_repr in 'medianMmedianP':
-            full_df = pd.read_csv(constants.DATA_DIR['medianMmedianP'], index_col=0)
-        else:
-            raise ValueError('Available data representations are ["percentile", "medianMmedianP"]')
+        stamp = utils.get_time_stamp()
+        main_fldr = os.path.join(constants.MODELS_DIR['main'], stamp)
+        self.stampfldr_ = main_fldr
+        os.mkdir(main_fldr)
+
+        utils.save_experiment_params(main_fldr, exp_params)
 
         if self._expr_params is None:
             self._check_and_fill_expr_params( )
@@ -116,8 +116,11 @@ class Experiment:
         self._ML_obj.set_params(**self._expr_params['ML'])
 
         group_df = self._DD_obj.run()
+        group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
+
         # Make sure that the group_df contains TD and ASD
         group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df)
+        group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
 
         # Drop Age, SEX, behavioral report, and behavioral category before feature selection
         age = group_df.pop('AGE_AT_SCAN ')
@@ -127,12 +130,22 @@ class Experiment:
         srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
 
         Xselected, y = self._FS_obj.run(group_df)
-        with open('./temp__FE_obj.p', 'wb') as f:
-            dill.dump(self._FS_obj, f, recurse=True)
+        utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj)
 
-        # self.FS_selected_feats_ =  self._FS_obj.selected_feats_
-        #
-        # self.ML_grid_ = self._ML_obj.run(Xselected, y)
+        self.FS_selected_feats_ =  self._FS_obj.selected_feats_
+        self.FS_grid_scores_ = self._FS_obj.scores_
+        with open(os.path.join(main_fldr, 'selected_feats.txt'), 'w') as f:
+            for feat in self.FS_selected_feats_:
+                f.write(f'{feat}\n')
+        with open(os.path.join(main_fldr, 'selected_feats_scores.txt'), 'w') as f:
+            cntr = 0
+            for score in self.FS_grid_scores_:
+                f.write(f'{score} ')
+                cntr += 1
+
+        self.ML_grid_ = self._ML_obj.run(Xselected, y)
+        utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj)
+
 
     def _validate_params(self, dd:dict, prefix:str=None):
         for key, val in dd.items():
@@ -163,20 +176,14 @@ class Experiment:
                 raise ValueError(f'{key} is not a class member')
 
     def save_results(self, filename):
+        # Needs to be modified
         if '.' in filename:
             postfix = filename.split('.')[1]
         else:
             postfix = 'p'
 
-        with open(filename, 'rb') as f:
+        with open(os.path.join(self.stampfldr_, filename), 'wb') as f:
             dill.dump(self, f)
-
-        # Until I make sure that dill can load my Experiment class anywhere
-        new_file_name = filename.split('.')[0]
-        new_file_name += f'_{utils.get_time_stamp()}.{postfix}'
-        full_name = os.path.join(constants.MODELS_DIR['main'], new_file_name)
-        with open(full_name, 'wb') as f:
-            dill.dump(self, f, recurse=True)
 
         utils.save_experiment_params(self._expr_params)
 

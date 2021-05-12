@@ -37,17 +37,35 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
                 raise ValueError(f'Set class_name to be one of the following: {self.AVAILABLE_CLASSIFIERS.keys()}')
         elif isinstance(class_name, (list, tuple)):
             self.est = {}
-            self._clc_key = []
             for name in class_name:
                 e, c = self._get_est_key(name)
                 self.est[c] = e
-                self._clc_key.append(c)
             self._isMult_est = True
         else:
             raise ValueError(f"Availabe values for class_name are (str, list or tuple) containing on or more of"
                              f"{self.AVAILABLE_CLASSIFIERS.keys()}")
 
         self.grid = self._update_grid()
+
+
+    def _handle_estimator(self, est):
+        fixed_est = None
+        _clc_key = None
+        if isinstance(est, str):
+            fixed_est, _clc_key = self._get_est_key(est)
+        elif isinstance(est, (list, tuple)):
+            clc_dict = dict()
+            for e in est:
+                if isinstance(e, str):
+                    est, _clc_key = self._get_est_key(e)
+                    clc_dict[_clc_key]= est
+                else:
+                    raise ValueError(f'est should be a string with classifier name, list with classifier names')
+            fixed_est = clc_dict
+        else:
+            raise ValueError(f'est should be a string with classifier name, list with classifier names')
+
+        return fixed_est, _clc_key
 
     def _get_est_key(self, class_name: str) -> tuple:
         est = None
@@ -81,28 +99,31 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
 
     def set_params(self, **params):
         for key, val in params.items():
-            if key in self.__dict__.keys():
+            if key == 'est':
+                setattr(self, 'est', self._handle_estimator(val)[0])
+                setattr(self, '_clc_key', self._handle_estimator(val)[1])
+            elif key in self.__dict__.keys():
                 setattr(self, key, val)
             else:
                 raise ValueError(f'{key} is not a valid CustomClassifier parameter')
         self._update_grid()
 
     def _fit_single_est(self, X, y, **fit_params):
-        self.set_params(fit_params)
+        self.set_params(**fit_params)
         self.grid.fit(X, y)
         return self.grid
 
     def _fit_mult_est(self, X, y, **fit_params):
-        self.set_params(fit_params)
+        self.set_params(**fit_params)
         for clc in self.grid:
             self.grid[clc].fit(X, y)
         return self.grid
 
     def fit(self, X, y, **fit_params):
         if isinstance(self.est, dict):
-            self.grid = self._fit_single_est(X, y, **fit_params)
-        elif isinstance(self.est, sklearn.base.ClassifierMixin):
             self.grid = self._fit_mult_est(X, y, **fit_params)
+        elif base.is_classifier(self.est):
+            self.grid = self._fit_single_est(X, y, **fit_params)
         return self
 
     def _single_predict(self, X):
