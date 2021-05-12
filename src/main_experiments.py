@@ -130,7 +130,7 @@ class Experiment:
         srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
 
         Xselected, y = self._FS_obj.run(group_df)
-        utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj)
+        utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
 
         self.FS_selected_feats_ =  self._FS_obj.selected_feats_
         self.FS_grid_scores_ = self._FS_obj.scores_
@@ -144,7 +144,7 @@ class Experiment:
                 cntr += 1
 
         self.ML_grid_ = self._ML_obj.run(Xselected, y)
-        utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj)
+        utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
 
 
     def _validate_params(self, dd:dict, prefix:str=None):
@@ -177,15 +177,14 @@ class Experiment:
 
     def save_results(self, filename):
         # Needs to be modified
-        if '.' in filename:
-            postfix = filename.split('.')[1]
+        if '.' in filename[-5:]:
+            fname = filename.split('.')[1]
         else:
-            postfix = 'p'
+            fname = filename
 
-        with open(os.path.join(self.stampfldr_, filename), 'wb') as f:
+        with open(os.path.join(self.stampfldr_, fname+'.p'), 'wb') as f:
             dill.dump(self, f)
 
-        utils.save_experiment_params(self._expr_params)
 
 
     def visualize_results(self):

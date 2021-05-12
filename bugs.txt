@@ -1,4 +1,6 @@
 ** DataDivisor
+	* BUG TYPE: Coding-Technical-implementation
+
 	DataDivisor main function
 	*	divisor = DataDivisor(df, df_p, 'srs')
    	        df = divisor.divide()
@@ -18,3 +20,15 @@
 		   file which has more subjects.
 
 ********************************************************************************************************************************************************************************
+** DataDivisor
+	* BUG TYPE: Research-Logical
+
+	1. Not all of the subjects have conducted the whole SRS test. I assume that some of them are diagnosed once 2 or 3 tests pass the minimum total score
+	   to be diagnosed as ASD. Therefore, the test is concluded and the subject is diagnosed.
+
+	2. I have been using the overall diagnosis (TD/ASD) which is found in column "DX_GROUP" to classify between subjects instead of using a specific SRS
+	   test score. The problem is that some of the subjects can score a moderate ASD score in a specific SRS module while they score TD in the rest modules
+ 	   Therefore, they get the overall diagnoses to be TD even though they posses some ASD traits. A more comprehensive experiment would be for each module
+	   three classifiers are made (sever vs td), (moderate vs td), and (mild vs td) while totally ignoring the DX_Group index. A new subject is then passed to
+	   the three classifiers and assigned to the class with highest probability.
+

@@ -1,0 +1,11 @@
+*** Notes
+
+	**The SRS T scores have a range: 59 or below is TD/normal. 60-65 is mild, 66-75 is moderate, and above 76 is severe.
+	Your data looks like that spread holds true.**
+
+* Found subjects that are diagnosed TD and have a moderate ASD score in communication ("KKI_29322", "OHSU_1_28950")
+* Subject KUL_3_29658 is diagnosed ASD with score SRS_TOTAL = 59 and KUL_3_29656 is diagnosed ASD with score SRS_TOTAL=47
+
+** Not all of the SRS tests are conducted to all subjects. Some subjects has only 3 tests, then the SRS_total is computed for only those 3 test, therefore
+it is less than 59 and the subject is still diagnosed to be autistic. 
+** QUESTION: Within each module should I classify based on the score ranges (sever, mild and moderate) or based on the overall score**
