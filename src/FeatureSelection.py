@@ -143,7 +143,12 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
 
         self.fit(X, y)
         self.scores_ = self.get_grid_scores()
-        self.selected_feats_ = self.all_feats_[self.get_support()]
+        if isinstance(self.rfe_, dict):
+            self.selected_feats_ = {}
+            for key, item in self.get_support().items():
+                self.selected_feats_[key] = self.all_feats_[item]
+        else:
+            self.selected_feats_ = self.all_feats_[self.get_support()]
         return self.transform(X), y
 
 

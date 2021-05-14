@@ -23,7 +23,7 @@ AVAILABLE_CLASSIFIERS_MAP = {
     'svm': ['svc', 'svm'],
     'lsvm': ['lsvm', 'linear svm', 'linsvm'],
     'xgb': ['xgb', 'extragradientboost'],
-    'lr': ['logistic', 'logistic regression', 'lg'],
+    'lr': ['logistic', 'logistic regression', 'lg', 'lr'],
     'gnb': ['naive_bayes', 'naive bayes', 'gaussian naive bayes', 'gnb'],
     'pagg': ['pagg', 'passive_aggressive', 'passive aggressive', 'passagg', 'pasag'],
     'ridge': ['ridge', 'rdg', 'rd'],

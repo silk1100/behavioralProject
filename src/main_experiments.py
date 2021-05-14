@@ -7,7 +7,9 @@ import dill
 from experiment_designer import exp_params
 import utils
 import pandas as pd
-
+from matplotlib import pyplot as plt
+import matplotlib.style as style
+style.use('ggplot')
 
 class Experiment:
     def __init__(self, **experiment_params):
@@ -61,7 +63,7 @@ class Experiment:
             else:
                 self._expr_params[obj_type]['_'.join(parts[1:])] = item
 
-    def _check_and_fix_unbalance_groups(self, df_all:pd.DataFrame, df_group:pd.DataFrame)->pd.DataFrame:
+    def _check_and_fix_unbalance_groups(self, df_all:pd.DataFrame, df_group:pd.DataFrame, category: str)->pd.DataFrame:
         try:
             ASD_count = df_group['DX_GROUP'].value_counts()[1]
         except Exception:
@@ -81,12 +83,21 @@ class Experiment:
             # Sample within the age group of the more group
             if more_ASd:
                 # Sample from TD
+                category_col = [col for col in df_group.columns if col.startswith('categories_')][0].split('_')[1]
+                converted_col_name = f"SRS_{category_col}_T"
+                df_td_G = df_all[df_all[converted_col_name]<= 59] # _G stands for group
                 df_td = df_all[df_all['DX_GROUP']==2]
+
                 age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
                 upper_bound = age_mean+age_std
                 lower_bound = age_mean-age_std
-                df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
-                df_added = df_target.sample(n=ASD_count-TD_count, random_state=1)
+                # df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
+                df_target1 = df_td_G.loc[(df_td_G['AGE_AT_SCAN ']>=lower_bound) & (df_td_G['AGE_AT_SCAN ']<=upper_bound),:]
+                df_target2 = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
+                df_added = df_target1.sample(n=ASD_count-TD_count, random_state=1234)
+                if (len(df_added) + TD_count)/(len(df_added) + TD_count + ASD_count) < 0.4:
+                    df_added2 = df_target2.sample(n=ASD_count - TD_count-len(df_added), random_state=1)
+                    df_added = pd.concat([df_added, df_added2], axis=0)
             else:
                 # Sample from ASD
                 df_asd = df_all[df_all['DX_GROUP']==1]
@@ -99,7 +110,44 @@ class Experiment:
             df = pd.concat([df_group, df_added], axis=0)
         else:
             df = df_group
+
+        df['my_labels'] = df[converted_col_name].apply(lambda x: 2 if x<=59 else 1)
         return df
+
+    def _plot_distr(self, df):
+        f = plt.figure(num=1, figsize=(12, 8))
+        ax = plt.gca()
+        df[df['my_labels']==1]['AGE_AT_SCAN '].rename('TD').plot(kind='bar', ax=ax, legend=True)
+        df[df['my_labels']==2]['AGE_AT_SCAN '].rename('ASD').plot(kind='bar', ax=ax, legend=True)
+        plt.xlabel('Age')
+        plt.ylabel('PDF')
+        plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[exp_params["DD"]["srs_type"]]} with ASD as'
+                  f' {exp_params["DD"]["severity_group"]}')
+        plt.savefig(f'{os.path.join(self.stampfldr_, "age_dist_group.png")}')
+        plt.close(f)
+
+    def _plot_score_grid(self, rfe_obj):
+        f = plt.figure(num=1, figsize=(12, 8))
+        ax = plt.gca()
+
+
+
+        plt.xlabel('Age')
+        plt.ylabel('PDF')
+        plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[exp_params["DD"]["srs_type"]]} with ASD as'
+                  f' {exp_params["DD"]["severity_group"]}')
+        plt.savefig(f'{os.path.join(self.stampfldr_, "age_dist_group.png")}')
+        plt.close(f)
+
+
+    def _plot_feature_importance(self, rfe_obj):
+        pass
+
+    def _save_ML_scores(self, ml_grid):
+        pass
+
+    def _save_selected_feats_json(self, selected_feats):
+        pass
 
     def run(self):
         stamp = utils.get_time_stamp()
@@ -118,8 +166,14 @@ class Experiment:
         group_df = self._DD_obj.run()
         group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
 
+        category = constants.SRS_TEST_NAMES_MAP[exp_params['DD']['srs_type']]
+        # severity = exp_params['DD']['severity_group']
+
         # Make sure that the group_df contains TD and ASD
-        group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df)
+        group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
+
+
+
         group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
 
         # Drop Age, SEX, behavioral report, and behavioral category before feature selection
@@ -128,9 +182,14 @@ class Experiment:
         _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)
         srs_col = group_df.pop(srs_col_name)
         srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
-
+        final_diag = group_df.pop('DX_GROUP')
+        group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
         Xselected, y = self._FS_obj.run(group_df)
         utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
+
+        f = plt.figure(figsize=(12, 8))
+
+
 
         self.FS_selected_feats_ =  self._FS_obj.selected_feats_
         self.FS_grid_scores_ = self._FS_obj.scores_
@@ -185,10 +244,6 @@ class Experiment:
         with open(os.path.join(self.stampfldr_, fname+'.p'), 'wb') as f:
             dill.dump(self, f)
 
-
-
-    def visualize_results(self):
-        pass
 
 if __name__ == "__main__":
     experiment_1 = Experiment(**exp_params)

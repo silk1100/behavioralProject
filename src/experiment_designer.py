@@ -10,7 +10,7 @@ exp_params = {
             'divide_data': True,
         },
         'FS':{
-            'est': 'lsvm',
+            'est': ['lsvm','lr'],
             'cv': 5,
             'scoring':'balanced_accuracy',
             'n_jobs':1,
@@ -19,7 +19,7 @@ exp_params = {
             'min_features_to_select': 1,
         },
         'ML':{
-            'est': 'nn',#['xgb', 'lsvm', 'sgd','svm'],
+            'est': ['svm','nn','lsvm'],#['xgb', 'lsvm', 'sgd','svm'],
             'cv':5,
             'scoring':'balanced_accuracy',
             'n_jobs':3,

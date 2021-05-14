@@ -110,13 +110,19 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
 
     def _fit_single_est(self, X, y, **fit_params):
         self.set_params(**fit_params)
-        self.grid.fit(X, y)
+        if isinstance(X, dict):
+            pass
+        else:
+            self.grid.fit(X, y)
         return self.grid
 
     def _fit_mult_est(self, X, y, **fit_params):
         self.set_params(**fit_params)
-        for clc in self.grid:
-            self.grid[clc].fit(X, y)
+        if isinstance(X, dict):
+            pass
+        else:
+            for clc in self.grid:
+                self.grid[clc].fit(X, y)
         return self.grid
 
     def fit(self, X, y, **fit_params):
