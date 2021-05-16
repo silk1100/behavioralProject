@@ -10,6 +10,18 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import matplotlib.style as style
 style.use('ggplot')
+import numpy as np
+import seaborn as sns
+import matplotlib
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 16}
+matplotlib.rc('font', **font)
+import json
+from collections import defaultdict
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (confusion_matrix, f1_score,accuracy_score,precision_score,
+                            recall_score, roc_auc_score, plot_roc_curve)
 
 class Experiment:
     def __init__(self, **experiment_params):
@@ -117,9 +129,10 @@ class Experiment:
     def _plot_distr(self, df):
         f = plt.figure(num=1, figsize=(12, 8))
         ax = plt.gca()
-        df[df['my_labels']==1]['AGE_AT_SCAN '].rename('TD').plot(kind='bar', ax=ax, legend=True)
-        df[df['my_labels']==2]['AGE_AT_SCAN '].rename('ASD').plot(kind='bar', ax=ax, legend=True)
+        df[df['my_labels']==1]['AGE_AT_SCAN '].rename('TD').plot(kind='bar', ax=ax, legend=True, color='blue')
+        df[df['my_labels']==2]['AGE_AT_SCAN '].rename('ASD').plot(kind='bar', ax=ax, legend=True, color='red')
         plt.xlabel('Age')
+        plt.xticks([])
         plt.ylabel('PDF')
         plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[exp_params["DD"]["srs_type"]]} with ASD as'
                   f' {exp_params["DD"]["severity_group"]}')
@@ -130,24 +143,147 @@ class Experiment:
         f = plt.figure(num=1, figsize=(12, 8))
         ax = plt.gca()
 
+        if isinstance(rfe_obj, dict):
+            for key, item in rfe_obj.items():
+                grid = item.grid_scores_
+                plt.cla()
+                plt.plot(np.arange(1, len(grid)+1), grid)
+                plt.xlabel('# of features')
+                plt.ylabel('Scores')
+                plt.title(f'{exp_params["FS"]["scoring"] if isinstance(exp_params["FS"]["scoring"], str) else "Score"} vs.'
+                          f'number of features')
+                plt.savefig(f'{os.path.join(self.stampfldr_, f"FS_{key}.png")}')
+        else:
+            grid = rfe_obj.grid_scores_
+            plt.plot(np.arange(1, len(grid)), grid)
+            plt.xlabel('# of features')
+            plt.ylabel('Scores')
+            plt.title(f'{exp_params["FS"]["scoring"] if isinstance(exp_params["FS"]["scoring"]) else "Score"} vs.'
+                      f'number of features')
+            plt.savefig(f'{os.path.join(self.stampfldr_, "FS.png")}')
 
-
-        plt.xlabel('Age')
-        plt.ylabel('PDF')
-        plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[exp_params["DD"]["srs_type"]]} with ASD as'
-                  f' {exp_params["DD"]["severity_group"]}')
-        plt.savefig(f'{os.path.join(self.stampfldr_, "age_dist_group.png")}')
         plt.close(f)
 
 
-    def _plot_feature_importance(self, rfe_obj):
-        pass
+    def _plot_feature_importance(self, df, rfe_obj):
+        f = plt.figure(num=1, figsize=(12, 8))
+        ax = plt.gca()
+        df_local = df.drop('DX_GROUP', axis=1) if 'DX_GROUP' in df.columns else df
 
-    def _save_ML_scores(self, ml_grid):
-        pass
+        if isinstance(rfe_obj, dict):
+            for key, item in rfe_obj.items():
+                if 'coef_' in item.estimator_.__dict__:
+                    imp = item.estimator_.coef_
+                else:
+                    imp = item.estimator_.feature_importance_
+                selected_feats = df_local.columns[item.support_]
+                selected_feats_list = []
+                for x, y in zip(selected_feats, imp[0]):
+                    selected_feats_list.append((x, y))
+                selected_feats_list_sorted = sorted(selected_feats_list, key=lambda xy: abs(xy[1]), reverse=True)
+                sorted_feats = ['_'.join(xy[0].split('_')[0:2]) for xy in selected_feats_list_sorted]
+                sorted_imp = [xy[1] for xy in selected_feats_list_sorted]
+                plt.cla()
+                sns.barplot(y=sorted_feats, x=sorted_imp)
+                fig_name = f"FS_importance_{item.estimator_.__str__().split('(')[0]}.png"
+                plt.savefig(f'{os.path.join(self.stampfldr_,key+"_"+fig_name)}')
+        else:
+            if 'coef_' in rfe_obj.estimator_.__dict__:
+                imp = rfe_obj.estimator_.coef_
+            else:
+                imp = rfe_obj.estimator_.feature_importance_
+            selected_feats = df_local.columns[rfe_obj.support_]
+            selected_feats_list = []
+            for x, y in zip(selected_feats, imp[0]):
+                selected_feats_list.append((x,y))
+            selected_feats_list_sorted = sorted(selected_feats_list, key=lambda xy: abs(xy[1]), reverse=True)
+            sorted_feats = ['_'.join(xy[0].split('_')[0:2]) for xy in selected_feats_list_sorted]
+            sorted_imp = [xy[1] for xy in selected_feats_list_sorted]
+
+            sns.barplot(y=sorted_feats, x=sorted_imp)
+            fig_name = f"FS_importance_{rfe_obj.estimator_.__str__().split('(')[0]}.png"
+            plt.savefig(f'{os.path.join(self.stampfldr_, fig_name)}')
+
+        plt.close(f)
+
+    def _save_ML_scores(self, Xselected, ml_obj):
+        results_dict = defaultdict(dict)
+        for krf, rfe_model in Xselected.items():
+            for kml, ml_model in ml_obj[krf].items():
+                bind = ml_obj[krf][kml].best_index_
+                split_keys = [k for k in ml_obj[krf][kml].cv_results_.keys() if 'split' in k and 'test' in k]
+                results_num = []
+                for sk in split_keys:
+                    results_num.append(ml_obj[krf][kml].cv_results_[sk][bind])
+                results_dict[krf][kml] = f"{np.mean(results_num):.2f} +/- {np.std(results_num, ddof=1):.2f}"
+        df = pd.DataFrame(results_dict).T
+        df.to_csv(os.path.join(self.stampfldr_, 'ML_best_est_scores_rfRows_mlCols.csv'))
 
     def _save_selected_feats_json(self, selected_feats):
-        pass
+        with open(os.path.join(self.stampfldr_, 'selected_feats.json'), 'w') as f:
+            if isinstance(selected_feats, dict):
+                dict2save = {key: item.tolist() for key, item in selected_feats.items()}
+                json.dump(dict2save, f)
+            else:
+                dict2save = {exp_params['FS']['est']: selected_feats.tolist() if isinstance(selected_feats, np.ndarray)
+                else selected_feats}
+                json.dump(dict2save, f)
+
+    def _create_pseudo_scores(self, Xselected,y, ml_obj):
+        best_estimators_dict = defaultdict(dict)
+        for krf, rfe_model in ml_obj.items():
+            for kml, ml_model in ml_obj[krf].items():
+                best_estimators_dict[krf][kml] = ml_obj[krf][kml].best_estimator_
+
+        results_dict = defaultdict(dict)
+
+        f = plt.figure(num=1, figsize=(12, 8))
+        ax = plt.gca()
+        for krf, rfe_model in best_estimators_dict.items():
+            Xstrain, Xstest, ytrain, ytest = train_test_split(Xselected[krf], y, test_size=0.2, random_state=231,
+                                                              shuffle=True)
+            for kml, ml_model in best_estimators_dict[krf].items():
+                best_estimators_dict[krf][kml].fit(Xstrain, ytrain)
+                yhat = best_estimators_dict[krf][kml].predict(Xstest)
+
+                uax = plot_roc_curve(best_estimators_dict[krf][kml], Xstest, ytest, ax=ax)
+                uax.figure_.suptitle(f'RFE: {krf}, ML: {kml}')
+
+                C = confusion_matrix(ytest, yhat)
+                results_dict[krf][kml] = {}
+                tp = C[0, 0]
+                tn = C[1, 1]
+                fp = C[1, 0]
+                fn = C[0, 1]
+                sensitivity = tp / (tp + fn)  # sensitivity, recall, hit rate, or true positive rate
+                specificity = tn / (tn + fp)  # specificity, selectivity or true negative rate
+                PPV = tp / (tp + fp)  # precision or positive predictive value
+                NPV = tn / (tn + fn)
+                acc = (tp + tn) / (tp + tn + fp + fn)
+                f1 = 2 * tp / (2 * tp + fp + fn)
+                results_dict[krf][kml]['sens'] = recall_score(yhat, ytest)
+                results_dict[krf][kml]['spec'] = specificity
+                results_dict[krf][kml]['acc'] = accuracy_score(yhat, ytest)
+                results_dict[krf][kml]['f1'] = f1_score(yhat, ytest)
+                results_dict[krf][kml]['PPV'] = precision_score(yhat, ytest)
+                results_dict[krf][kml]['NPV'] = NPV
+                results_dict[krf][kml]['auc'] = roc_auc_score(yhat, ytest)
+
+            plt.savefig(f'{os.path.join(self.stampfldr_, f"ROC_{krf}_{kml}.png")}')
+            plt.cla()
+
+        first_level = list(best_estimators_dict.keys())
+        second_level = list(best_estimators_dict[kml].keys())
+        index = pd.MultiIndex.from_product([first_level, second_level],
+                                           names=['RFE', 'Metrics'])
+        df = pd.DataFrame(None, index=index, columns=results_dict[first_level[0]][second_level[0]].keys())
+        for krf in results_dict:
+            for kml in results_dict[krf]:
+                for metric in results_dict[krf][kml]:
+                    df.loc[(krf, kml), metric] = results_dict[krf][kml][metric]
+
+        df.to_csv(os.path.join(self.stampfldr_, "pseudo_metrics.csv"))
+
 
     def run(self):
         stamp = utils.get_time_stamp()
@@ -172,7 +308,7 @@ class Experiment:
         # Make sure that the group_df contains TD and ASD
         group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
 
-
+        self._plot_distr(group_df)
 
         group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
 
@@ -184,25 +320,33 @@ class Experiment:
         srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
         final_diag = group_df.pop('DX_GROUP')
         group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
+        group_df = group_df.sample(frac=1, random_state=132)
         Xselected, y = self._FS_obj.run(group_df)
+        with open(os.path.join(self.stampfldr_, 'Xselected.p'), 'wb') as f:
+            dill.dump((Xselected, y), f)
+
         utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
-
+        self._plot_score_grid(self._FS_obj.rfe_)
+        self._plot_feature_importance(group_df, self._FS_obj.rfe_)
         f = plt.figure(figsize=(12, 8))
-
 
 
         self.FS_selected_feats_ =  self._FS_obj.selected_feats_
         self.FS_grid_scores_ = self._FS_obj.scores_
-        with open(os.path.join(main_fldr, 'selected_feats.txt'), 'w') as f:
-            for feat in self.FS_selected_feats_:
-                f.write(f'{feat}\n')
-        with open(os.path.join(main_fldr, 'selected_feats_scores.txt'), 'w') as f:
-            cntr = 0
-            for score in self.FS_grid_scores_:
-                f.write(f'{score} ')
-                cntr += 1
+        self._save_selected_feats_json(self.FS_selected_feats_)
+        # with open(os.path.join(main_fldr, 'selected_feats.txt'), 'w') as f:
+        #     for feat in self.FS_selected_feats_:
+        #         f.write(f'{feat}\n')
+        # with open(os.path.join(main_fldr, 'selected_feats_scores.txt'), 'w') as f:
+        #     cntr = 0
+        #     for score in self.FS_grid_scores_:
+        #         f.write(f'{score} ')
+        #         cntr += 1
 
-        self.ML_grid_ = self._ML_obj.run(Xselected, y)
+        self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
+        self._save_ML_scores(Xselected, self.ML_grid_)
+
+        self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
         utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
 
 

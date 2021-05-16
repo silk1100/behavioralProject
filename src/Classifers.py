@@ -2,7 +2,7 @@ import sklearn.base
 import constants
 import sklearn.base as base
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-
+from collections import defaultdict
 
 class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     AVAILABLE_CLASSIFIERS = {
@@ -46,13 +46,17 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
                              f"{self.AVAILABLE_CLASSIFIERS.keys()}")
 
         self.grid = self._update_grid()
-
+        self.output_models_ = defaultdict(dict)
+        self.selector_est_ = None
+        self.output_predictions_ = None
+        self.output_predictions_log_ = None
 
     def _handle_estimator(self, est):
         fixed_est = None
         _clc_key = None
         if isinstance(est, str):
             fixed_est, _clc_key = self._get_est_key(est)
+            self._ismult_est = False
         elif isinstance(est, (list, tuple)):
             clc_dict = dict()
             for e in est:
@@ -62,6 +66,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
                 else:
                     raise ValueError(f'est should be a string with classifier name, list with classifier names')
             fixed_est = clc_dict
+            self._isMult_est=True
         else:
             raise ValueError(f'est should be a string with classifier name, list with classifier names')
 
@@ -82,7 +87,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
             grid = RandomizedSearchCV(est, param_distributions=constants.PARAM_GRID[key],scoring=self.scoring,
                                            n_iter=self.n_iter, n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose)
         elif self.hyper_search_type in 'exhaustive':
-            grid = GridSearchCV(est, param_grid=constants.PARAM_GRID[self.key], scoring=self.scoring,
+            grid = GridSearchCV(est, param_grid=constants.PARAM_GRID[key], scoring=self.scoring,
                                      n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose)
         else:
             raise ValueError("hyper_search_type can only be either random or exhaustive")
@@ -91,7 +96,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     def _update_grid(self):
         if  self._isMult_est:
             self.grid = {}
-            for key, est in self.est:
+            for key, est in self.est.items():
                 self.grid[key] = self._set_single_grid(est, key)
         else:
             self.grid = self._set_single_grid(self.est, self._clc_key)
@@ -111,19 +116,24 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     def _fit_single_est(self, X, y, **fit_params):
         self.set_params(**fit_params)
         if isinstance(X, dict):
-            pass
+            for rfe_sel, Xarr in X.items():
+                self.output_models_[rfe_sel][self._clc_key] = self.grid.fit(Xarr, y)
         else:
-            self.grid.fit(X, y)
-        return self.grid
+            self.output_models_[self.selector_est_][self._clc_key] = self.grid.fit(X, y)
+        # return self.grid
+        return self.output_models_
 
     def _fit_mult_est(self, X, y, **fit_params):
         self.set_params(**fit_params)
         if isinstance(X, dict):
-            pass
+            for rfe_sel, Xarr in X.items():
+                for clc in self.grid:
+                    self.output_models_[rfe_sel][clc] = self.grid[clc].fit(Xarr, y)
         else:
             for clc in self.grid:
-                self.grid[clc].fit(X, y)
-        return self.grid
+                self.output_models_[self.selector_est_][self._clc_key] = self.grid[clc].fit(X, y)
+        # return self.grid
+        return self.output_models_
 
     def fit(self, X, y, **fit_params):
         if isinstance(self.est, dict):
@@ -133,22 +143,42 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         return self
 
     def _single_predict(self, X):
-        return self.grid.predict(X)
+        if isinstance(X, dict):
+            for rfe_sel, Xarr in X.items():
+                self.output_predictions_[rfe_sel][self._clc_key] = self.grid.predict(Xarr)
+        else:
+            self.output_predictions_[self.selector_est_][self._clc_key] = self.grid.predict(X)
+        return self.output_predictions_
 
     def _mult_predict(self, X):
-        results = {}
-        for clc in self.grid:
-            results[clc] = self.grid[clc].predict(X)
-        return results
+        if isinstance(X, dict):
+            for rfe_sel, Xarr in X.items():
+                for clc in self.grid:
+                    self.output_predictions_[rfe_sel][clc] = self.grid[clc].predict(Xarr)
+        else:
+            for clc in self.grid:
+                self.output_predictions_[self.selector_est_][clc] = self.grid[clc].predict(X)
+
+        # return results
+        return self.output_predictions_
 
     def _single_predict_proba(self, X):
-        return self.grid.predict_proba(X)
+        if isinstance(X, dict):
+            for rfe_sel, Xarr in X.items():
+                self.output_predictions_[rfe_sel][self._clc_key] = self.grid.predict_log(Xarr)
+        else:
+            self.output_predictions_[self.selector_est_][self._clc_key] = self.grid.predict_log(X)
+        return self.output_predictions_
 
     def _mult_predict_proba(self, X):
-        results = {}
-        for clc in self.grid:
-            results[clc] = self.grid[clc].predict_proba(X)
-        return results
+        if isinstance(X, dict):
+            for rfe_sel, Xarr in X.items():
+                for clc in self.grid:
+                    self.output_predictions_log_[rfe_sel][clc] = self.grid[clc].predict_proba(Xarr)
+        else:
+            for clc in self.grid:
+                self.output_predictions_[self.selector_est_][clc] = self.grid[clc].predict_proba(X)
+        return self.output_predictions_log_
 
     def predict(self, X):
         if self._isMult_est:
@@ -165,6 +195,10 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         return result
 
 
-    def run(self, X, y):
+    def run(self, X, y, **params):
+        for key, item in params.items():
+            if ('sel' in key) or ('est' in key):
+                self.selector_est_ = item
         self.fit(X, y)
-        return self.grid
+        # return self.grid
+        return self.output_models_
