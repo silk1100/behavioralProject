@@ -13,7 +13,7 @@ exp_params = {
             'est': ['lsvm','lr','rf'],
             'cv': 5,
             'scoring':'balanced_accuracy',
-            'n_jobs':1,
+            'n_jobs':-1,
             'verbose': 3,
             'step':1,
             'min_features_to_select': 1,
@@ -22,7 +22,7 @@ exp_params = {
             'est': ['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
             'cv':5,
             'scoring':'balanced_accuracy',
-            'n_jobs':3,
+            'n_jobs':-1,
             'verbose':3,
             'hyper_search_type':'random',
             #'agg_models': False, #(need to be implemented)
