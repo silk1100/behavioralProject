@@ -4,13 +4,13 @@ import os
 exp_params = {
         'data_repr': 'median',
         'DD':{
-            'srs_type': 'comm',
+            'srs_type': None,#'comm',
             'severity_group': 'sever',
             'age_group': None,
-            'divide_data': True,
+            'divide_data': False,
         },
         'FS':{
-            'est': ['lsvm','lr'],
+            'est': ['lsvm','lr','rf'],
             'cv': 5,
             'scoring':'balanced_accuracy',
             'n_jobs':1,
@@ -19,7 +19,7 @@ exp_params = {
             'min_features_to_select': 1,
         },
         'ML':{
-            'est': ['svm','nn','lsvm'],#['xgb', 'lsvm', 'sgd','svm'],
+            'est': ['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
             'cv':5,
             'scoring':'balanced_accuracy',
             'n_jobs':3,

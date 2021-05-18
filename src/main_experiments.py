@@ -4,6 +4,7 @@ import FeatureSelection
 import Classifers
 import constants
 import dill
+from sklearn.preprocessing import StandardScaler
 from experiment_designer import exp_params
 import utils
 import pandas as pd
@@ -15,7 +16,7 @@ import seaborn as sns
 import matplotlib
 font = {'family' : 'normal',
         'weight' : 'bold',
-        'size'   : 16}
+        'size'   : 14}
 matplotlib.rc('font', **font)
 import json
 from collections import defaultdict
@@ -127,15 +128,37 @@ class Experiment:
         return df
 
     def _plot_distr(self, df):
-        f = plt.figure(num=1, figsize=(12, 8))
+        f = plt.figure(num=1, figsize=(16, 10))
         ax = plt.gca()
-        df[df['my_labels']==1]['AGE_AT_SCAN '].rename('TD').plot(kind='bar', ax=ax, legend=True, color='blue')
-        df[df['my_labels']==2]['AGE_AT_SCAN '].rename('ASD').plot(kind='bar', ax=ax, legend=True, color='red')
+        df[df['DX_GROUP']==1]['AGE_AT_SCAN '].rename('TD').plot(kind='bar', ax=ax, legend=True, color='blue', alpha=0.5)
+        df[df['DX_GROUP']==2]['AGE_AT_SCAN '].rename('ASD').plot(kind='bar', ax=ax, legend=True, color='red', alpha=0.5)
+        xmin1 = df[df['DX_GROUP'] == 1]['AGE_AT_SCAN '].min()
+        xmin2 = df[df['DX_GROUP'] == 2]['AGE_AT_SCAN '].min()
+        xmax1 = df[df['DX_GROUP'] == 1]['AGE_AT_SCAN '].max()
+        xmax2 = df[df['DX_GROUP'] == 2]['AGE_AT_SCAN '].max()
+        loc = 0
+        step = int (len(ax.get_xticks())/5)
+        updated_xticks = []
+        while loc<len(ax.get_xticks()):
+            updated_xticks.append(ax.get_xticks()[loc])
+            loc += step
+
+        custom_ticks = np.linspace(np.min([xmin1,xmin2]) , np.max([xmax1, xmax2]), len(updated_xticks))
+
+        plt.xticks(updated_xticks, custom_ticks, visible=True, rotation=30)
+
+        # ax.set_xticks(custom_ticks)
+        # ax.set_xticklabels(custom_ticks)
         plt.xlabel('Age')
-        plt.xticks([])
+        # plt.xticks([])
         plt.ylabel('PDF')
-        plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[exp_params["DD"]["srs_type"]]} with ASD as'
+        if exp_params["DD"]["srs_type"] is not None:
+            plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[exp_params["DD"]["srs_type"]]} with ASD as'
                   f' {exp_params["DD"]["severity_group"]}')
+        else:
+            plt.title(f'Age distribution of all of the'
+                      f' data')
+
         plt.savefig(f'{os.path.join(self.stampfldr_, "age_dist_group.png")}')
         plt.close(f)
 
@@ -166,19 +189,19 @@ class Experiment:
 
 
     def _plot_feature_importance(self, df, rfe_obj):
-        f = plt.figure(num=1, figsize=(12, 8))
+        f = plt.figure(num=1, figsize=(18, 10))
         ax = plt.gca()
         df_local = df.drop('DX_GROUP', axis=1) if 'DX_GROUP' in df.columns else df
 
         if isinstance(rfe_obj, dict):
             for key, item in rfe_obj.items():
                 if 'coef_' in item.estimator_.__dict__:
-                    imp = item.estimator_.coef_
+                    imp = item.estimator_.coef_.reshape(-1,).tolist()
                 else:
-                    imp = item.estimator_.feature_importance_
+                    imp = item.estimator_.feature_importances_.reshape(-1,).tolist()
                 selected_feats = df_local.columns[item.support_]
                 selected_feats_list = []
-                for x, y in zip(selected_feats, imp[0]):
+                for x, y in zip(selected_feats, imp):
                     selected_feats_list.append((x, y))
                 selected_feats_list_sorted = sorted(selected_feats_list, key=lambda xy: abs(xy[1]), reverse=True)
                 sorted_feats = ['_'.join(xy[0].split('_')[0:2]) for xy in selected_feats_list_sorted]
@@ -191,7 +214,7 @@ class Experiment:
             if 'coef_' in rfe_obj.estimator_.__dict__:
                 imp = rfe_obj.estimator_.coef_
             else:
-                imp = rfe_obj.estimator_.feature_importance_
+                imp = rfe_obj.estimator_.feature_importances_
             selected_feats = df_local.columns[rfe_obj.support_]
             selected_feats_list = []
             for x, y in zip(selected_feats, imp[0]):
@@ -286,68 +309,82 @@ class Experiment:
 
 
     def run(self):
-        stamp = utils.get_time_stamp()
-        main_fldr = os.path.join(constants.MODELS_DIR['main'], stamp)
-        self.stampfldr_ = main_fldr
-        os.mkdir(main_fldr)
+        # stamp = utils.get_time_stamp()
+        # main_fldr = os.path.join(constants.MODELS_DIR['main'], stamp)
+        # self.stampfldr_ = main_fldr
+        # os.mkdir(main_fldr)
+        #
+        # utils.save_experiment_params(main_fldr, exp_params)
+        #
+        # if self._expr_params is None:
+        #     self._check_and_fill_expr_params( )
+        # self._DD_obj.set_params(**self._expr_params['DD'])
+        # self._FS_obj.set_params(**self._expr_params['FS'])
+        # self._ML_obj.set_params(**self._expr_params['ML'])
+        #
+        # group_df = self._DD_obj.run()
+        # group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
+        # group_df.dropna(inplace=True)
+        # if exp_params['DD']['srs_type'] is not None:
+        #     category = constants.SRS_TEST_NAMES_MAP[exp_params['DD']['srs_type']]
+        #     group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
+        # else:
+        #     category = None
+        #
+        # # severity = exp_params['DD']['severity_group']
+        #
+        # # Make sure that the group_df contains TD and ASD
+        #
+        #
+        # group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
+        #
+        # # Drop Age, SEX, behavioral report, and behavioral category before feature selection
+        #
+        # _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)
+        # if srs_col_name is not None:
+        #     srs_col = group_df.pop(srs_col_name)
+        #     srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
+        #     final_diag = group_df.pop('DX_GROUP')
+        #     group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
+        #
+        # group_df = group_df.sample(frac=1, random_state=132)
+        #
+        # self._plot_distr(group_df)
+        #
+        # age = group_df.pop('AGE_AT_SCAN ')
+        # sex = group_df.pop('SEX')
+        #
+        # Xselected, y, normalizer = self._FS_obj.run(group_df)
+        #
+        # # with open(os.path.join(self.stampfldr_, 'Xselected.p'), 'wb') as f:
+        # #     dill.dump((Xselected, y), f)
+        #
+        # utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y))
+        # if normalizer is not None:
+        #     utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer)
+        # utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
+        #
+        # self._save_selected_feats_json(self.FS_selected_feats_)
+        # self._plot_score_grid(self._FS_obj.rfe_)
+        self.stampfldr_ = "D:\\PhD\\codes\\behavioralProject\\models\\20210516_012804"
+        with open(os.path.join(self.stampfldr_, 'FS_obj.p'), 'rb') as f:
+            fs_obj = dill.load(f)
+        group_df = pd.read_csv(os.path.join(self.stampfldr_, 'group_df_afterFixation.csv'), index_col=0)
+        group_df.drop(['SEX','AGE_AT_SCAN '], axis=1, inplace=True)
+        self._FS_obj.rfe_ = fs_obj
+        y = group_df.pop('DX_GROUP').values
+        X = StandardScaler().fit_transform(group_df)
+        Xselected = {name: rfe.transform(X) for name, rfe in fs_obj.items()}
 
-        utils.save_experiment_params(main_fldr, exp_params)
-
-        if self._expr_params is None:
-            self._check_and_fill_expr_params( )
-        self._DD_obj.set_params(**self._expr_params['DD'])
-        self._FS_obj.set_params(**self._expr_params['FS'])
-        self._ML_obj.set_params(**self._expr_params['ML'])
-
-        group_df = self._DD_obj.run()
-        group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
-
-        category = constants.SRS_TEST_NAMES_MAP[exp_params['DD']['srs_type']]
-        # severity = exp_params['DD']['severity_group']
-
-        # Make sure that the group_df contains TD and ASD
-        group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
-
-        self._plot_distr(group_df)
-
-        group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
-
-        # Drop Age, SEX, behavioral report, and behavioral category before feature selection
-        age = group_df.pop('AGE_AT_SCAN ')
-        sex = group_df.pop('SEX')
-        _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)
-        srs_col = group_df.pop(srs_col_name)
-        srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
-        final_diag = group_df.pop('DX_GROUP')
-        group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
-        group_df = group_df.sample(frac=1, random_state=132)
-        Xselected, y = self._FS_obj.run(group_df)
-        with open(os.path.join(self.stampfldr_, 'Xselected.p'), 'wb') as f:
-            dill.dump((Xselected, y), f)
-
-        utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
-        self._plot_score_grid(self._FS_obj.rfe_)
         self._plot_feature_importance(group_df, self._FS_obj.rfe_)
-        f = plt.figure(figsize=(12, 8))
-
-
         self.FS_selected_feats_ =  self._FS_obj.selected_feats_
         self.FS_grid_scores_ = self._FS_obj.scores_
-        self._save_selected_feats_json(self.FS_selected_feats_)
-        # with open(os.path.join(main_fldr, 'selected_feats.txt'), 'w') as f:
-        #     for feat in self.FS_selected_feats_:
-        #         f.write(f'{feat}\n')
-        # with open(os.path.join(main_fldr, 'selected_feats_scores.txt'), 'w') as f:
-        #     cntr = 0
-        #     for score in self.FS_grid_scores_:
-        #         f.write(f'{score} ')
-        #         cntr += 1
 
         self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
         self._save_ML_scores(Xselected, self.ML_grid_)
-
         self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
-        utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
+
+        # utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
 
 
     def _validate_params(self, dd:dict, prefix:str=None):

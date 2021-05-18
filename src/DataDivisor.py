@@ -129,6 +129,8 @@ class DataDivisor:
                                    index_label='subj_id')
 
     def _validity_srs_test_type(self, srs_test_type:str) -> tuple:
+        if srs_test_type is None:
+            return None, None
         file_path = None
         correct_srs_test_type = srs_test_type
         if srs_test_type in constants.DATA_DIV_DIR:
@@ -163,6 +165,9 @@ class DataDivisor:
             file_path, correct_srs_test_type = self._validity_srs_test_type(srs_test_type)
         except Exception:
             raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR.keys())}')
+
+        if srs_test_type is None:
+            return self.df
 
         if not self._validate_severity_level(severity_level):
             raise ValueError(f'severity level should be one of the following: {constants.SEVERITY_LEVEL_AVAILABLE}')
