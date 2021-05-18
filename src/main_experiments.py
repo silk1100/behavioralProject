@@ -353,8 +353,11 @@ class Experiment:
         age = group_df.pop('AGE_AT_SCAN ')
         sex = group_df.pop('SEX')
 
-        Xselected, y, normalizer = self._FS_obj.run(group_df)
 
+        Xselected, y, normalizer = self._FS_obj.run(group_df)
+        self._plot_feature_importance(group_df, self._FS_obj.rfe_)
+        self.FS_selected_feats_ =  self._FS_obj.selected_feats_
+        self.FS_grid_scores_ = self._FS_obj.scores_
         # with open(os.path.join(self.stampfldr_, 'Xselected.p'), 'wb') as f:
         #     dill.dump((Xselected, y), f)
 
@@ -376,9 +379,7 @@ class Experiment:
         # X = StandardScaler().fit_transform(group_df)
         # Xselected = {name: rfe.transform(X) for name, rfe in fs_obj.items()}
 #################################################################################################################
-        self._plot_feature_importance(group_df, self._FS_obj.rfe_)
-        self.FS_selected_feats_ =  self._FS_obj.selected_feats_
-        self.FS_grid_scores_ = self._FS_obj.scores_
+
 
         self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
         self._save_ML_scores(Xselected, self.ML_grid_)

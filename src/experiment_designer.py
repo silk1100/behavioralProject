@@ -4,7 +4,7 @@ import os
 exp_params = {
         'data_repr': 'median',
         'DD':{
-            'srs_type': None,#'comm',
+            'srs_type': 'comm',
             'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,
