@@ -125,7 +125,7 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
             return {name:rfe.grid_scores_ for name,rfe in self.rfe_.items()}
         return self.rfe_.grid_scores_
 
-    def run(self, X, y=None, normalize=True):
+    def run(self, X, y=None, normalizer=None, normalize:bool=None):
         if y is None:
             y = X['DX_GROUP']
             X = X.drop('DX_GROUP', axis=1)
@@ -133,17 +133,10 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         X = X.values
         y = y.values
         if normalize:
-            if self.normalizer is None:
+            if normalizer is None:
                 self.normalizer = StandardScaler()
-            elif isinstance(self.normalizer, str):
-                if 'min' in self.normalizer:
-                    self.normalizer = MinMaxScaler()
-                elif 'st' in self.normalizer:
-                    self.normalizer = StandardScaler()
-                else:
-                    raise ValueError('Normalizer can be either minmax or standard')
-            elif 'transform' not in dir(self.normalizer) or 'fit' not in dir(self.normalizer):
-                raise ValueError('normalizer can either be string ["minmax","standard"], or Transformer object')
+            else:
+                self.normalizer = normalizer
 
             X = self.normalizer.fit_transform(X)
 

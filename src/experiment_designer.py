@@ -3,23 +3,24 @@ import os
 
 exp_params = {
         'data_repr': 'median',
+        'normalizer':'minmax',
         'DD':{
             'srs_type': None,#'cog',
             'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,
         },
-        # 'FS':{
-        #     'est': ['lsvm','lr','xgb'],
-        #     'cv': 5,
-        #     'scoring':'balanced_accuracy',
-        #     'n_jobs':-1,
-        #     'verbose': 3,
-        #     'step':1,
-        #     'min_features_to_select': 1,
-        # },
+        'FS':{
+            'est': ['lsvm','lr','xgb'],
+            'cv': 5,
+            'scoring':'balanced_accuracy',
+            'n_jobs':-1,
+            'verbose': 3,
+            'step':1,
+            'min_features_to_select': 1,
+        },
         'ML':{
-            'est': ['lr','lsvm','xgb'],#['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
+            'est': ['lr','lsvm','xgb', 'knn','rf', 'sgd'],#['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
             'cv':5,
             'scoring':'balanced_accuracy',
             'n_jobs':-1,

@@ -4,7 +4,7 @@ import FeatureSelection
 import Classifers
 import constants
 import dill
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from experiment_designer import exp_params
 import utils
 import pandas as pd
@@ -31,6 +31,7 @@ class Experiment:
 
         # Type of data to use
         self.data_repr = None
+        self.normalizer = StandardScaler()
 
         # Data divisor parameters
         self.DD_srs_type = None
@@ -76,6 +77,19 @@ class Experiment:
                     setattr(self, f'{key}_{skey}', sval)
             elif key == 'data_repr':
                 self.data_repr = item
+            elif key == 'normalizer':
+                if isinstance(item, str):
+                    if 'min' in item.lower():
+                        self.normalizer = MinMaxScaler()
+                    elif 'st' in item.lower():
+                        self.normalizer = StandardScaler()
+                    else:
+                        raise ValueError("Normalizer can be eith 'minmax' or 'standard")
+                elif ('fit' in dir(item)) and ('transform' in dir(item)) and ('fit_transform' in dir(item)):
+                    self.normalizer = item
+                else:
+                    raise ValueError("normalizer can be either string (minmax, or standard) or a transform that "
+                                     "implements 'fit','transform' and 'fit_transform' methods")
             else:
                 raise KeyError(f'Experiment parameters should be one of the following ["DD","FS","ML"]')
 
@@ -336,7 +350,7 @@ class Experiment:
             self._check_and_fill_expr_params( )
         self._DD_obj.set_params(**self._expr_params['DD'])
         if 'FS' in self._expr_params:
-            self._FS_obj.set_params(**self._expr_params['FS'])
+            self._FS_obj.set_params(**self._expr_params['FS'], normalizer=self.normalizer)
         else:
             self._FS_obj = None
         self._ML_obj.set_params(**self._expr_params['ML'])
@@ -374,7 +388,9 @@ class Experiment:
         sex = group_df.pop('SEX')
 
         if self._FS_obj is not None:
-            Xselected, y, normalizer = self._FS_obj.run(group_df)
+            # Normalizer to be refactored
+            normalize = True if self.normalizer is not None else False
+            Xselected, y, normalizer = self._FS_obj.run(group_df, normalizer=self.normalizer, normalize=normalize)
             self._plot_feature_importance(group_df, self._FS_obj.rfe_)
             self.FS_selected_feats_ =  self._FS_obj.selected_feats_
             self.FS_grid_scores_ = self._FS_obj.scores_
