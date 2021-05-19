@@ -131,7 +131,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
                     self.output_models_[rfe_sel][clc] = self.grid[clc].fit(Xarr, y)
         else:
             for clc in self.grid:
-                self.output_models_[self.selector_est_][self._clc_key] = self.grid[clc].fit(X, y)
+                self.output_models_[self.selector_est_][clc] = self.grid[clc].fit(X, y)
         # return self.grid
         return self.output_models_
 

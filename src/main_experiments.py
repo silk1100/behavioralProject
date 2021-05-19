@@ -190,7 +190,7 @@ class Experiment:
             plt.title(f'Age distribution of all of the'
                       f' data')
 
-        plt.savefig(f'{os.path.join(self.stampfldr_, "age_dist_group.png")}')
+        plt.savefig(f'{os.path.join(self.stampfldr_, "age_dist_group.png")}', bbox_inches='tight')
         plt.close(f)
 
     def _plot_score_grid(self, rfe_obj):
@@ -206,7 +206,7 @@ class Experiment:
                 plt.ylabel('Scores')
                 plt.title(f'{exp_params["FS"]["scoring"] if isinstance(exp_params["FS"]["scoring"], str) else "Score"} vs.'
                           f'number of features')
-                plt.savefig(f'{os.path.join(self.stampfldr_, f"FS_{key}.png")}')
+                plt.savefig(f'{os.path.join(self.stampfldr_, f"FS_{key}.png")}', bbox_inches='tight')
         else:
             grid = rfe_obj.grid_scores_
             plt.plot(np.arange(1, len(grid)), grid)
@@ -214,7 +214,7 @@ class Experiment:
             plt.ylabel('Scores')
             plt.title(f'{exp_params["FS"]["scoring"] if isinstance(exp_params["FS"]["scoring"]) else "Score"} vs.'
                       f'number of features')
-            plt.savefig(f'{os.path.join(self.stampfldr_, "FS.png")}')
+            plt.savefig(f'{os.path.join(self.stampfldr_, "FS.png")}', bbox_inches='tight')
 
         plt.close(f)
 
@@ -240,7 +240,7 @@ class Experiment:
                 plt.cla()
                 sns.barplot(y=sorted_feats, x=sorted_imp)
                 fig_name = f"FS_importance_{item.estimator_.__str__().split('(')[0]}.png"
-                plt.savefig(f'{os.path.join(self.stampfldr_,key+"_"+fig_name)}')
+                plt.savefig(f'{os.path.join(self.stampfldr_,key+"_"+fig_name)}', bbox_inches='tight')
         else:
             if 'coef_' in rfe_obj.estimator_.__dict__:
                 imp = rfe_obj.estimator_.coef_
@@ -408,10 +408,7 @@ class Experiment:
             self._plot_feature_importance(group_df, self._FS_obj.rfe_)
             self.FS_selected_feats_ =  self._FS_obj.selected_feats_
             self.FS_grid_scores_ = self._FS_obj.scores_
-        # with open(os.path.join(self.stampfldr_, 'Xselected.p'), 'wb') as f:
-        #     dill.dump((Xselected, y), f)
 
-            utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y))
             if normalizer is not None:
                 utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer)
             utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
@@ -419,7 +416,7 @@ class Experiment:
             self._save_selected_feats_json(self.FS_selected_feats_)
             self._plot_score_grid(self._FS_obj.rfe_)
         else:
-            sc = StandardScaler()
+            sc = self.normalizer
             if 'DX_GROUP' in group_df.columns:
                 Xselected = sc.fit_transform(group_df.drop('DX_GROUP', axis=1))
             else:
@@ -437,7 +434,9 @@ class Experiment:
         # Xselected = {name: rfe.transform(X) for name, rfe in fs_obj.items()}
 #################################################################################################################
 
+        utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y))
         if self._FS_obj is None:
+
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est="None")
         else:
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
