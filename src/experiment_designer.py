@@ -5,7 +5,7 @@ exp_params = {
         'data_repr': 'median',
         'normalizer':'minmax',
         'DD':{
-            'srs_type': None,#'cog',
+            'srs_type': 'comm',#'cog',
             'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,
@@ -20,7 +20,7 @@ exp_params = {
         #     'min_features_to_select': 1,
         # },
         'ML':{
-            'est': ['lr','lsvm','xgb','rf'],#['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
+            'est': ['lr','lsvm','xgb','rf', 'gbt'],#['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
             'cv':5,
             'scoring':'balanced_accuracy',
             'n_jobs':-1,

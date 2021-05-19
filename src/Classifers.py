@@ -34,7 +34,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         if isinstance(class_name, str):
             self.est, self._clc_key = self._get_est_key(class_name)
             if self.est is None:
-                raise ValueError(f'Set class_name to be one of the following: {self.AVAILABLE_CLASSIFIERS.keys()}')
+                raise ValueError(f'Set class_name to be one of the following: {constants.AVAILABLE_CLASSIFIERS.keys()}')
         elif isinstance(class_name, (list, tuple)):
             self.est = {}
             for name in class_name:
@@ -43,7 +43,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
             self._isMult_est = True
         else:
             raise ValueError(f"Availabe values for class_name are (str, list or tuple) containing on or more of"
-                             f"{self.AVAILABLE_CLASSIFIERS.keys()}")
+                             f"{constants.AVAILABLE_CLASSIFIERS.keys()}")
 
         self.grid = self._update_grid()
         self.output_models_ = defaultdict(dict)
@@ -75,7 +75,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     def _get_est_key(self, class_name: str) -> tuple:
         est = None
         _clc_key = None
-        for key, items_list in self.AVAILABLE_CLASSIFIERS.items():
+        for key, items_list in constants.AVAILABLE_CLASSIFIERS_MAP.items():
             if class_name in items_list:
                 est = constants.CLC_DICT[key]
                 _clc_key=key

@@ -29,7 +29,8 @@ AVAILABLE_CLASSIFIERS_MAP = {
     'ridge': ['ridge', 'rdg', 'rd'],
     'sgd': ['sgd', 'stochastic gradient descend'],
     'knn': ['knn', 'neighbors', 'k-nn'],
-    'rf': ['rf', 'random forest']
+    'rf': ['rf', 'random forest'],
+    'gradboost': ['gradboost','gradient trees', 'gradient boost trees', 'gbt']
 }
 ABIDEII_PATH = "/media/tarek/D/Autism/Structural_MRI/AbideII_FreeSurfer"
 ABIDEI_PREPROC_PATH = "/media/tarek/D/Autism/Structural_MRI/Abide_Preprocessed_Dataset"
