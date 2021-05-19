@@ -9,3 +9,18 @@
 ** Not all of the SRS tests are conducted to all subjects. Some subjects has only 3 tests, then the SRS_total is computed for only those 3 test, therefore
 it is less than 59 and the subject is still diagnosed to be autistic. 
 ** QUESTION: Within each module should I classify based on the score ranges (sever, mild and moderate) or based on the overall score**
+** ANSWER: Whenever I use SRS module, I remove the original diagnosis and add a new diagnosis based on the module score, so a TD might be assigned to be ASD if he scores high enough
+           in that module
+
+***********************************************************************************************************************************************************************************
+*** New Contributions
+* I specified a run without a feature selection using only 3 classifiers (logistic regression, linear SVM, and Xgboost trees) in order to find the optimum hyper parameters that can
+be used for feature selection process.
+
+** Perform the whole pipeline using regressors in stead of classifiers. Select features based on regressors that will minimize the error between the correct SRS score and the predicted
+ones, then use those features to train different regressors to predict SRS score.
+
+** Aggregate the results of different models (classifiers/regressors) trained on different SRS modules to get a final diagnosis.
+
+
+

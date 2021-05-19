@@ -262,7 +262,21 @@ class Experiment:
 
     def _save_ML_scores(self, Xselected, ml_obj):
         results_dict = defaultdict(dict)
-        for krf, rfe_model in Xselected.items():
+        if isinstance(Xselected, np.ndarray):
+            if exp_params.get('FS') is None:
+                new_Xselected = {'none':Xselected}
+            else:
+                est = exp_params.get('FS').get('est')
+                if isinstance(est, str):
+                    new_Xselected = {est: Xselected}
+                else:
+                    raise ValueError("There is a problem with understanding the experiment designer 'FS' estimator")
+        elif isinstance(Xselected, dict):
+            new_Xselected = Xselected
+        else:
+            raise ValueError("Xselected being passed to save model is not a numpy array or a dictionary")
+
+        for krf, rfe_model in new_Xselected.items():
             for kml, ml_model in ml_obj[krf].items():
                 bind = ml_obj[krf][kml].best_index_
                 split_keys = [k for k in ml_obj[krf][kml].cv_results_.keys() if 'split' in k and 'test' in k]
@@ -427,10 +441,11 @@ class Experiment:
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est="None")
         else:
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
+
+        utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
         self._save_ML_scores(Xselected, self.ML_grid_)
         self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
 
-        # utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
 
 
 
