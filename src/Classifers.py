@@ -10,7 +10,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         'svm':['svc','svm'],
         'lsvm':['lsvm','linear svm','linsvm'],
         'xgb':['xgb','extragradientboost'],
-        'lr':['logistic','logistic regression','lg'],
+        'lr':['logistic','logistic regression','lg', 'lr'],
         'gnb':['naive_bayes','naive bayes','gaussian naive bayes','gnb'],
         'pagg':['pagg','passive_aggressive','passive aggressive','passagg','pasag'],
         'ridge':['ridge','rdg','rd'],
@@ -51,7 +51,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         self.output_predictions_ = None
         self.output_predictions_log_ = None
 
-    def _handle_estimator(self, est):
+    def _handle_estimator(self, est: object) -> object:
         fixed_est = None
         _clc_key = None
         if isinstance(est, str):

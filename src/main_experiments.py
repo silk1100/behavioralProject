@@ -67,6 +67,23 @@ class Experiment:
             self._parse_exp_params(experiment_params)
             self._expr_params = experiment_params
 
+    def _parse_exp_params(self, exp_params_dict):
+        for key, item in exp_params_dict.items():
+            if key in ['DD', 'FS', 'ML']:
+                data_dict = item
+                self._validate_params(data_dict, key)
+                for skey, sval in data_dict.items():
+                    setattr(self, f'{key}_{skey}', sval)
+            elif key == 'data_repr':
+                self.data_repr = item
+            else:
+                raise KeyError(f'Experiment parameters should be one of the following ["DD","FS","ML"]')
+
+    def _validate_params(self, dd:dict, prefix:str=None):
+        for key, val in dd.items():
+            if f'{prefix}_{key}' not in self.__dict__:
+                raise KeyError(f'{prefix}_{key} is not a valid variable')
+
     def _check_and_fill_expr_params(self):
         for key, item in self.__dict__.items():
             parts = key.split('_')
@@ -318,7 +335,10 @@ class Experiment:
         if self._expr_params is None:
             self._check_and_fill_expr_params( )
         self._DD_obj.set_params(**self._expr_params['DD'])
-        self._FS_obj.set_params(**self._expr_params['FS'])
+        if 'FS' in self._expr_params:
+            self._FS_obj.set_params(**self._expr_params['FS'])
+        else:
+            self._FS_obj = None
         self._ML_obj.set_params(**self._expr_params['ML'])
 
         group_df = self._DD_obj.run()
@@ -353,21 +373,28 @@ class Experiment:
         age = group_df.pop('AGE_AT_SCAN ')
         sex = group_df.pop('SEX')
 
-
-        Xselected, y, normalizer = self._FS_obj.run(group_df)
-        self._plot_feature_importance(group_df, self._FS_obj.rfe_)
-        self.FS_selected_feats_ =  self._FS_obj.selected_feats_
-        self.FS_grid_scores_ = self._FS_obj.scores_
+        if self._FS_obj is not None:
+            Xselected, y, normalizer = self._FS_obj.run(group_df)
+            self._plot_feature_importance(group_df, self._FS_obj.rfe_)
+            self.FS_selected_feats_ =  self._FS_obj.selected_feats_
+            self.FS_grid_scores_ = self._FS_obj.scores_
         # with open(os.path.join(self.stampfldr_, 'Xselected.p'), 'wb') as f:
         #     dill.dump((Xselected, y), f)
 
-        utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y))
-        if normalizer is not None:
-            utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer)
-        utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
+            utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y))
+            if normalizer is not None:
+                utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer)
+            utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
 
-        self._save_selected_feats_json(self.FS_selected_feats_)
-        self._plot_score_grid(self._FS_obj.rfe_)
+            self._save_selected_feats_json(self.FS_selected_feats_)
+            self._plot_score_grid(self._FS_obj.rfe_)
+        else:
+            sc = StandardScaler()
+            if 'DX_GROUP' in group_df.columns:
+                Xselected = sc.fit_transform(group_df.drop('DX_GROUP', axis=1))
+            else:
+                Xselected = sc.fit_transform(group_df)
+            y = group_df['DX_GROUP'].values
        ########################################################################################################
         # self.stampfldr_ = "D:\\PhD\\codes\\behavioralProject\\models\\20210516_012804"
         # with open(os.path.join(self.stampfldr_, 'FS_obj.p'), 'rb') as f:
@@ -380,30 +407,16 @@ class Experiment:
         # Xselected = {name: rfe.transform(X) for name, rfe in fs_obj.items()}
 #################################################################################################################
 
-
-        self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
+        if self._FS_obj is None:
+            self.ML_grid_ = self._ML_obj.run(Xselected, y, est="None")
+        else:
+            self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
         self._save_ML_scores(Xselected, self.ML_grid_)
         self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
 
         # utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
 
 
-    def _validate_params(self, dd:dict, prefix:str=None):
-        for key, val in dd.items():
-            if f'{prefix}_{key}' not in self.__dict__:
-                raise KeyError(f'{prefix}_{key} is not a valid variable')
-
-    def _parse_exp_params(self, exp_params_dict):
-        for key, item in exp_params_dict.items():
-            if key in ['DD', 'FS', 'ML']:
-                data_dict = item
-                self._validate_params(data_dict, key)
-                for skey, sval in data_dict.items():
-                    setattr(self, f'{key}_{skey}', sval)
-            elif key == 'data_repr':
-                self.data_repr = item
-            else:
-                raise KeyError(f'Experiment parameters should be one of the following ["DD","FS","ML"]')
 
     def set_params(self, **params):
         item = params.get(next(iter(params)))

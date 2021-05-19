@@ -4,29 +4,29 @@ import os
 exp_params = {
         'data_repr': 'median',
         'DD':{
-            'srs_type': 'comm',
+            'srs_type': None,#'cog',
             'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,
         },
-        'FS':{
-            'est': ['lsvm','lr','rf'],
-            'cv': 5,
-            'scoring':'balanced_accuracy',
-            'n_jobs':-1,
-            'verbose': 3,
-            'step':1,
-            'min_features_to_select': 1,
-        },
+        # 'FS':{
+        #     'est': ['lsvm','lr','xgb'],
+        #     'cv': 5,
+        #     'scoring':'balanced_accuracy',
+        #     'n_jobs':-1,
+        #     'verbose': 3,
+        #     'step':1,
+        #     'min_features_to_select': 1,
+        # },
         'ML':{
-            'est': ['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
+            'est': ['lr','lsvm','xgb'],#['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
             'cv':5,
             'scoring':'balanced_accuracy',
             'n_jobs':-1,
             'verbose':3,
             'hyper_search_type':'random',
             #'agg_models': False, #(need to be implemented)
-            'n_iter':250
+            'n_iter':1500
         }
     }
 
