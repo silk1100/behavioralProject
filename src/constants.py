@@ -137,7 +137,7 @@ PARAM_GRID={
         'beta_2':[0, 0.001, 0.01, 0.1, 0.3, 0.5, 0.9],
     },
     'gradboost':{
-        'loss':['ls','lad','huber','quantile'],
+        'loss':['deviance','exponential'],
         'learning_rate':np.arange(0.1, 5, 0.1),
         'n_estimators':np.arange(100,500,50),
         'subsample':np.arange(0.5,1, 0.1),

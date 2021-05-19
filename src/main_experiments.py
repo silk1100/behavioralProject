@@ -256,7 +256,7 @@ class Experiment:
 
             sns.barplot(y=sorted_feats, x=sorted_imp)
             fig_name = f"FS_importance_{rfe_obj.estimator_.__str__().split('(')[0]}.png"
-            plt.savefig(f'{os.path.join(self.stampfldr_, fig_name)}')
+            plt.savefig(f'{os.path.join(self.stampfldr_, fig_name)}', bbox_inches='tight')
 
         plt.close(f)
 
@@ -337,7 +337,7 @@ class Experiment:
                 results_dict[krf][kml]['NPV'] = NPV
                 results_dict[krf][kml]['auc'] = roc_auc_score(yhat, ytest)
 
-            plt.savefig(f'{os.path.join(self.stampfldr_, f"ROC_{krf}_{kml}.png")}')
+            plt.savefig(f'{os.path.join(self.stampfldr_, f"ROC_{krf}_{kml}.png")}', bbox_inches='tight')
             plt.cla()
 
         first_level = list(best_estimators_dict.keys())
