@@ -5,7 +5,7 @@ exp_params = {
         'data_repr': 'median',
         'normalizer':'minmax',
         'DD':{
-            'srs_type': 'comm',#'cog',
+            'srs_type': 'mot',#'cog',
             'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,

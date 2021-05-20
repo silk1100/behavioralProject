@@ -264,7 +264,7 @@ class Experiment:
         results_dict = defaultdict(dict)
         if isinstance(Xselected, np.ndarray):
             if exp_params.get('FS') is None:
-                new_Xselected = {'none':Xselected}
+                new_Xselected = {'None':Xselected}
             else:
                 est = exp_params.get('FS').get('est')
                 if isinstance(est, str):
@@ -341,7 +341,7 @@ class Experiment:
             plt.cla()
 
         first_level = list(best_estimators_dict.keys())
-        second_level = list(best_estimators_dict[kml].keys())
+        second_level = list(best_estimators_dict[first_level[0]].keys())
         index = pd.MultiIndex.from_product([first_level, second_level],
                                            names=['RFE', 'Metrics'])
         df = pd.DataFrame(None, index=index, columns=results_dict[first_level[0]][second_level[0]].keys())
@@ -418,9 +418,11 @@ class Experiment:
         else:
             sc = self.normalizer
             if 'DX_GROUP' in group_df.columns:
-                Xselected = sc.fit_transform(group_df.drop('DX_GROUP', axis=1))
+                X = sc.fit_transform(group_df.drop('DX_GROUP', axis=1))
             else:
-                Xselected = sc.fit_transform(group_df)
+                X = sc.fit_transform(group_df)
+            Xselected = dict()
+            Xselected["None"] = X
             y = group_df['DX_GROUP'].values
        ########################################################################################################
         # self.stampfldr_ = "D:\\PhD\\codes\\behavioralProject\\models\\20210516_012804"
@@ -440,8 +442,8 @@ class Experiment:
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est="None")
         else:
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
-
         utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
+
         self._save_ML_scores(Xselected, self.ML_grid_)
         self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
 
