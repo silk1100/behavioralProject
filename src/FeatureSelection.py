@@ -4,9 +4,11 @@ from sklearn.feature_selection import RFECV, SelectorMixin
 import constants
 from sklearn import base
 import numpy as np
+import os
+import dill
 
 class FeatureSelector(SelectorMixin, base.BaseEstimator):
-    def __init__(self, est=constants.CLC_DICT['lsvm'], selector_method='rfe'):
+    def __init__(self, est='lsvm', selector_method='rfe'):
         self.est = self._handle_estimator(est)
         self.cv=StratifiedKFold(5, shuffle=True, random_state=123)
         self.scoring = 'accuracy'
@@ -41,10 +43,32 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
                              f'or classifier object')
         return fixed_est
 
+
+    def _get_est_from_mlobj(self, maindir, mlobj):
+        if not isinstance(mlobj, dict):
+            raise ValueError(f'ML_obj.p in {maindir} is supposed to be a dictionary')
+        if (len(mlobj.keys()) > 1) or (mlobj.get('None') is None):
+            raise ValueError(f'ML_obj.p in {maindir} is supposed to have only one key "None" key referring that no FS'
+                             f' was conducted')
+
+        classifiers_dict = mlobj['None']
+        return classifiers_dict
+
+
     def _get_clc_from_str(self, est_name:str):
-        for key, list_names in constants.AVAILABLE_CLASSIFIERS_MAP.items():
-            if est_name in list_names:
-                return constants.CLC_DICT[key]
+        if os.path.isdir(est_name):
+            file_dir = os.path.join(est_name, 'ML_obj.p')
+            with open(file_dir, 'rb') as f:
+                ml_obj = dill.load(f)
+            class_names_dict = self._get_est_from_mlobj(est_name, ml_obj)
+            est = {}
+            for key, clc in class_names_dict.items():
+                est[key] = base.clone(clc.best_estimator_)
+            return est
+        else:
+            for key, list_names in constants.AVAILABLE_CLASSIFIERS_MAP.items():
+                if est_name in list_names:
+                    return constants.CLC_DICT[key]
         raise ValueError(f'estimator name should be one of the following {constants.AVAILABLE_CLASSIFIERS_MAP.keys()}')
 
     def fit(self, X, y, **rfecv_params):

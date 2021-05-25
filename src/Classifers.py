@@ -1,23 +1,11 @@
-import sklearn.base
 import constants
 import sklearn.base as base
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from collections import defaultdict
+import os
+import dill
 
 class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
-    AVAILABLE_CLASSIFIERS = {
-        'nn':['nn','ANN','DNN'],
-        'svm':['svc','svm'],
-        'lsvm':['lsvm','linear svm','linsvm'],
-        'xgb':['xgb','extragradientboost'],
-        'lr':['logistic','logistic regression','lg', 'lr'],
-        'gnb':['naive_bayes','naive bayes','gaussian naive bayes','gnb'],
-        'pagg':['pagg','passive_aggressive','passive aggressive','passagg','pasag'],
-        'ridge':['ridge','rdg','rd'],
-        'sgd':['sgd','stochastic gradient descend'],
-        'knn':['knn','neighbors','k-nn'],
-        'rf':['rf','random forest']
-    }
 
     def __init__(self, class_name: str='nn', hyper_search_type:str='random', scoring:str='balanced_accuracy',
                 n_jobs=-1, cv=None, n_iter=200, verbose=3):
@@ -34,7 +22,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         if isinstance(class_name, str):
             self.est, self._clc_key = self._get_est_key(class_name)
             if self.est is None:
-                raise ValueError(f'Set class_name to be one of the following: {constants.AVAILABLE_CLASSIFIERS.keys()}')
+                raise ValueError(f'Set class_name to be one of the following: {constants.AVAILABLE_CLASSIFIERS_MAP.keys()}')
         elif isinstance(class_name, (list, tuple)):
             self.est = {}
             for name in class_name:
@@ -43,7 +31,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
             self._isMult_est = True
         else:
             raise ValueError(f"Availabe values for class_name are (str, list or tuple) containing on or more of"
-                             f"{constants.AVAILABLE_CLASSIFIERS.keys()}")
+                             f"{constants.AVAILABLE_CLASSIFIERS_MAP.keys()}")
 
         self.grid = self._update_grid()
         self.output_models_ = defaultdict(dict)
@@ -72,6 +60,8 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
 
         return fixed_est, _clc_key
 
+
+
     def _get_est_key(self, class_name: str) -> tuple:
         est = None
         _clc_key = None
@@ -80,6 +70,11 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
                 est = constants.CLC_DICT[key]
                 _clc_key=key
                 break
+
+        if est == None:
+            raise ValueError(f'{class_name} is either an invalid directory to a folder containing ML_obj.p, or an invalid'
+                             f'classifier name')
+
         return est, _clc_key
 
     def _set_single_grid(self, est, key):

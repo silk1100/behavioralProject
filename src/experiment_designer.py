@@ -5,20 +5,22 @@ exp_params = {
         'data_repr': 'median',
         'normalizer':'minmax',
         'DD':{
-            'srs_type': 'mot',#'cog',
+            'srs_type': 'mot',#'cog',comm
             'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,
         },
-        # 'FS':{
-        #     'est': ['lsvm','lr','xgb'],
-        #     'cv': 5,
-        #     'scoring':'balanced_accuracy',
-        #     'n_jobs':-1,
-        #     'verbose': 3,
-        #     'step':1,
-        #     'min_features_to_select': 1,
-        # },
+        'FS':{
+            # 'est': ['lsvm','lr','xgb'],
+
+            'est': "../models/FS_Hyperparameters_MOT/", # If it is a directory, then Read the classifiers in MLobj
+            'cv': 5,
+            'scoring':'balanced_accuracy',
+            'n_jobs':-1,
+            'verbose': 3,
+            'step':1,
+            'min_features_to_select': 1,
+        },
         'ML':{
             'est': ['lr','lsvm','xgb','rf', 'gbt'],#['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
             'cv':5,

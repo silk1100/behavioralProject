@@ -378,7 +378,6 @@ class Experiment:
         else:
             category = None
 
-        severity = exp_params['DD']['severity_group']
 
         # Make sure that the group_df contains TD and ASD
 
@@ -473,6 +472,7 @@ class Experiment:
 
 
 if __name__ == "__main__":
+
     experiment_1 = Experiment(**exp_params)
     experiment_1.run()
     experiment_1.save_results("singleFSML")

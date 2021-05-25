@@ -18,6 +18,7 @@ FREESURFER_LABELS_FILES = {
     'a2009s': ['label/lh.aparc.a2009s.annot', 'label/rh.aparc.a2009s.annot'],
     'aparc': ['label/lh.aparc.annot', 'label/rh.aparc.annot']
 }
+
 AVAILABLE_CLASSIFIERS_MAP = {
     'nn': ['nn', 'ANN', 'DNN'],
     'svm': ['svc', 'svm'],
@@ -53,19 +54,22 @@ MODELS_DIR = {
 
 
 MAX_ITR = int(1e9)
+
+# currying Look it up
+
 CLC_DICT = {
-    'lsvm': LinearSVC(max_iter=MAX_ITR),
-    'pagg': PassiveAggressiveClassifier(max_iter=MAX_ITR),
-    'lr': LogisticRegression(max_iter=MAX_ITR),
-    'sgd': SGDClassifier(max_iter=MAX_ITR),
-    'ridge':RidgeClassifier(max_iter=MAX_ITR),
-    'knn': KNeighborsClassifier(),
-    'xgb': XGBClassifier(),
-    'gnb': GaussianNB(),
-    'rf': RandomForestClassifier(),
-    'svm': SVC(max_iter=MAX_ITR),
-    'nn': MLPClassifier(max_iter=MAX_ITR),
-    'gradboost': GradientBoostingClassifier()
+    'lsvm': lambda: LinearSVC(max_iter=MAX_ITR),
+    'pagg': lambda: PassiveAggressiveClassifier(max_iter=MAX_ITR),
+    'lr': lambda: LogisticRegression(max_iter=MAX_ITR),
+    'sgd': lambda: SGDClassifier(max_iter=MAX_ITR),
+    'ridge': lambda: RidgeClassifier(max_iter=MAX_ITR),
+    'knn': KNeighborsClassifier,
+    'xgb': XGBClassifier,
+    'gnb': GaussianNB,
+    'rf': RandomForestClassifier,
+    'svm': lambda: SVC(max_iter=MAX_ITR),
+    'nn': lambda: MLPClassifier(max_iter=MAX_ITR),
+    'gradboost': GradientBoostingClassifier
 }
 PARAM_GRID={
     'lsvm': {
@@ -149,20 +153,20 @@ PARAM_GRID={
     }
 }
 
-OUTPUT = {
-    'lsvm': '../data/models/lsvm',
-    'pagg': '../data/models/pagg',
-    'lr': '../data/models/lr',
-    'sgd': '../data/models/sgd',
-    'ridge':'../data/models/ridge',
-    'knn': '../data/models/knn',
-    'xgb': '../data/models/xgb',
-    'gnb': '../data/models/gnb',
-    'rf': '../data/models/rf',
-    'svm': '../data/models/svm',
-    'nn': '../data/models/nn',
-    'gradboost': '../data/models/gradboost'
-}
+# OUTPUT = {
+#     'lsvm': '../data/models/lsvm',
+#     'pagg': '../data/models/pagg',
+#     'lr': '../data/models/lr',
+#     'sgd': '../data/models/sgd',
+#     'ridge':'../data/models/ridge',
+#     'knn': '../data/models/knn',
+#     'xgb': '../data/models/xgb',
+#     'gnb': '../data/models/gnb',
+#     'rf': '../data/models/rf',
+#     'svm': '../data/models/svm',
+#     'nn': '../data/models/nn',
+#     'gradboost': '../data/models/gradboost'
+# }
 
 SRS_SCORES_MAP = {
     'TD': (0, 59),
@@ -171,14 +175,17 @@ SRS_SCORES_MAP = {
     'sever':(76, 1000)
 }
 
-SRS_TEST_T = [
-    'SRS_TOTAL_T',
-    'SRS_AWARENESS_T',
-    'SRS_COGNITION_T',
-    'SRS_COMMUNICATION_T',
-    'SRS_MOTIVATION_T',
-    'SRS_MANNERISMS_T'
-]
+# SRS_TEST_T = [ #DATA_DIV_DIR.keys()
+#     'SRS_TOTAL_T',
+#     'SRS_AWARENESS_T',
+#     'SRS_COGNITION_T',
+#     'SRS_COMMUNICATION_T',
+#     'SRS_MOTIVATION_T',
+#     'SRS_MANNERISMS_T'
+# ]
+
+SRS_TOTAL_T = "SRS_TOTAL_T"
+
 DATA_DIV_DIR = {
     'SRS_TOTAL_T': '../data/data_divisor/srs_total',
     'SRS_AWARENESS_T': '../data/data_divisor/srs_awar',
@@ -187,6 +194,9 @@ DATA_DIV_DIR = {
     'SRS_MOTIVATION_T': '../data/data_divisor/srs_mot',
     'SRS_MANNERISMS_T': '../data/data_divisor/srs_manner',
 }
+
+SRS_TEST_T = list(DATA_DIV_DIR.keys())
+
 SRS_TEST_NAMES_MAP = {
     'comm':'SRS_COMMUNICATION_T',
     'mot':'SRS_COMMUNICATION_T',
