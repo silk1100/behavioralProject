@@ -67,7 +67,7 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         _clc_key = None
         for key, items_list in constants.AVAILABLE_CLASSIFIERS_MAP.items():
             if class_name in items_list:
-                est = constants.CLC_DICT[key]
+                est = constants.CLC_DICT[key]()
                 _clc_key=key
                 break
 

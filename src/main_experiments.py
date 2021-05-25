@@ -451,10 +451,23 @@ class Experiment:
 
         utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y))
         if self._FS_obj is None:
-
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est="None")
         else:
-            self.ML_grid_ = self._ML_obj.run(Xselected, y, est=exp_params['FS']['est'])
+        # with open('..\\models\\20210524_211225\\FS_obj.p', 'rb') as f:
+        #     fs_obj = dill.load(f)
+        # groupdf = pd.read_csv('../models/20210524_211225/group_df_afterFixation.csv', index_col='subj_id')
+        # groupdf.drop(['DX_GROUP','AGE_AT_SCAN ','SEX','SRS_COMMUNICATION_T','categories_COMMUNICATION'], axis=1,
+        #              inplace=True)
+        # groupdf.rename({'my_labels':'DX_GROUP'}, axis=1, inplace=True)
+        # y = groupdf['DX_GROUP']
+        # Xs = MinMaxScaler().fit_transform(groupdf.drop('DX_GROUP', axis=1))
+        # self.stampfldr_ = "..\\models\\20210524_211225"
+        # main_fldr = self.stampfldr_
+        # Xselected = {}
+        # for key, fs in fs_obj.items():
+        #     Xselected[key] = Xs[:, np.where(fs.support_)[0]]
+            self.ML_grid_ = self._ML_obj.run(Xselected, y, est=list(Xselected.keys()) if isinstance(Xselected, dict)
+                                                                                    else exp_params['FS']['est'])
         utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
 
         self._save_ML_scores(Xselected, self.ML_grid_)
