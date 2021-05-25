@@ -18,7 +18,6 @@ import constants
 
 
 class DataDivisor:
-    FEATURE_REPR = ['medianMmedianP', 'percentile'] # Same keys as those were found in constants.py
     def __init__(self, data: pd.DataFrame=None, phenofile: pd.DataFrame=None, behavioral: str=None):
         self.df = self._handle_data_input(data)
 

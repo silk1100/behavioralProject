@@ -362,36 +362,50 @@ class Experiment:
 
         if self._expr_params is None:
             self._check_and_fill_expr_params( )
-        self._DD_obj.set_params(**self._expr_params['DD'])
+
+        if 'DD' in self._expr_params:
+            self._DD_obj.set_params(**self._expr_params['DD'])
+        else:
+            self._DD_obj = None
+
         if 'FS' in self._expr_params:
             self._FS_obj.set_params(**self._expr_params['FS'], normalizer=self.normalizer)
         else:
             self._FS_obj = None
-        self._ML_obj.set_params(**self._expr_params['ML'])
 
-        group_df = self._DD_obj.run()
-        group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
-        group_df.dropna(inplace=True)
-        if exp_params['DD']['srs_type'] is not None:
-            category = constants.SRS_TEST_NAMES_MAP[exp_params['DD']['srs_type']]
-            group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
+        if 'ML' in self._expr_params:
+            self._ML_obj.set_params(**self._expr_params['ML'])
         else:
-            category = None
+            self.ML_obj = None
 
+        if self._DD_obj is not None:
+            group_df = self._DD_obj.run()
+            group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
+            group_df.dropna(inplace=True)
+            if exp_params['DD']['srs_type'] is not None:
+                category = constants.SRS_TEST_NAMES_MAP[exp_params['DD']['srs_type']]
+                group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
+            else:
+                category = None
+            group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
 
-        # Make sure that the group_df contains TD and ASD
+            # Drop Age, SEX, behavioral report, and behavioral category before feature selection
+            _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)
+            if srs_col_name is not None:
+                srs_col = group_df.pop(srs_col_name)
+                srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
+                final_diag = group_df.pop('DX_GROUP')
+                group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
 
-
-        group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
-
-        # Drop Age, SEX, behavioral report, and behavioral category before feature selection
-
-        _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)
-        if srs_col_name is not None:
-            srs_col = group_df.pop(srs_col_name)
-            srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
-            final_diag = group_df.pop('DX_GROUP')
-            group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
+        else:
+########################################################################################################################
+###################### HANDLE WHEN I DONT WANT DATADIVISOR BY READING THE CORRESPONDING DATA REPRESENTATION ########
+##################### YOU WILL NEED TO CREATE A DATADIR MAP TO HANDLE DIFFERENT INPUT FROM EXPERIMENT_DESIGN AND DIRECT
+## IT TO THE CORRECT REPRESENATION FOLDER ##############################################################################
+            group_df = pd.read_csv(constants.DATA_DIR[''])
+            group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
+            group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
+#########################################################################################################################
 
         group_df = group_df.sample(frac=1, random_state=132)
 

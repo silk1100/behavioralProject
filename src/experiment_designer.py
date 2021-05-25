@@ -11,8 +11,7 @@ exp_params = {
             'divide_data': False,
         },
         'FS':{
-            # 'est': ['lsvm','lr','xgb'],
-
+            # 'est': ['lsvm','lr','xgb'], # Either this or the directory to a model folder with ML_obj.p in it (as below)
             'est': "../models/FS_Hyperparameters_MOT/", # If it is a directory, then Read the classifiers in MLobj
             'cv': 5,
             'scoring':'balanced_accuracy',
