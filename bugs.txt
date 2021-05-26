@@ -32,3 +32,11 @@
 	   three classifiers are made (sever vs td), (moderate vs td), and (mild vs td) while totally ignoring the DX_Group index. A new subject is then passed to
 	   the three classifiers and assigned to the class with highest probability.
 
+********************************************************************************************************************************************************************************
+** main_experiments.py
+	* BUG TYPE: Coding-Technical-Implementation
+	
+	1. utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y)) # Doesnt work (never executed)
+	2. utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer) # Doesnt work (never executed)
+	3. self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_) # Keeps crashing with weird errors like (ValueError: X has 34 features, but DecisionTreeRegressor is expecting 535 features as input)
+

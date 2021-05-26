@@ -3,7 +3,7 @@ import os
 
 exp_params = {
         'data_repr': 'median',
-        'normalizer':'minmax',
+        'normalizer':'std',
         'DD':{
             'srs_type': 'comm',#'cog',comm
             'severity_group': 'sever',
