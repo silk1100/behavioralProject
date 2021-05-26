@@ -39,4 +39,4 @@
 	1. utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y)) # Doesnt work (never executed)
 	2. utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer) # Doesnt work (never executed)
 	3. self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_) # Keeps crashing with weird errors like (ValueError: X has 34 features, but DecisionTreeRegressor is expecting 535 features as input)
-
+	4. If one of the classifiers loaded to be utilized in feature selection doesn't have coef_ or feature_importances_, then the code crashes/
