@@ -238,7 +238,12 @@ class Experiment:
                 sorted_feats = ['_'.join(xy[0].split('_')[0:2]) for xy in selected_feats_list_sorted]
                 sorted_imp = [xy[1] for xy in selected_feats_list_sorted]
                 plt.cla()
-                sns.barplot(y=sorted_feats, x=sorted_imp)
+                if len(sorted_feats)<=20:
+                    sns.barplot(y=sorted_feats, x=sorted_imp)
+                    plt.title(f'{len(sorted_feats)} are selected using {key}')
+                else:
+                    sns.barplot(y=sorted_feats[:20], x=sorted_imp[:20])
+                    plt.title(f'{len(sorted_feats)} are selected using {key}. Only 20 are shown')
                 fig_name = f"FS_importance_{item.estimator_.__str__().split('(')[0]}.png"
                 plt.savefig(f'{os.path.join(self.stampfldr_,key+"_"+fig_name)}', bbox_inches='tight')
         else:
@@ -253,8 +258,12 @@ class Experiment:
             selected_feats_list_sorted = sorted(selected_feats_list, key=lambda xy: abs(xy[1]), reverse=True)
             sorted_feats = ['_'.join(xy[0].split('_')[0:2]) for xy in selected_feats_list_sorted]
             sorted_imp = [xy[1] for xy in selected_feats_list_sorted]
-
-            sns.barplot(y=sorted_feats, x=sorted_imp)
+            if len(sorted_feats) <= 20:
+                sns.barplot(y=sorted_feats, x=sorted_imp)
+                plt.title(f"{len(sorted_feats)} are selected using {rfe_obj.estimator_.__str__().split('(')[0]}")
+            else:
+                sns.barplot(y=sorted_feats[:20], x=sorted_imp[:20])
+                plt.title(f"{len(sorted_feats)} are selected using {rfe_obj.estimator_.__str__().split('(')[0]}. Only 20 are shown")
             fig_name = f"FS_importance_{rfe_obj.estimator_.__str__().split('(')[0]}.png"
             plt.savefig(f'{os.path.join(self.stampfldr_, fig_name)}', bbox_inches='tight')
 
@@ -309,7 +318,7 @@ class Experiment:
         ax = plt.gca()
         for krf, rfe_model in best_estimators_dict.items():
             Xstrain, Xstest, ytrain, ytest = train_test_split(Xselected[krf], y, test_size=0.2, random_state=231,
-                                                              shuffle=True)
+                                                              shuffle=True, stratify=y)
             for kml, ml_model in best_estimators_dict[krf].items():
                 best_estimators_dict[krf][kml].fit(Xstrain, ytrain)
                 yhat = best_estimators_dict[krf][kml].predict(Xstest)
@@ -354,11 +363,10 @@ class Experiment:
 
     def run(self):
         stamp = utils.get_time_stamp()
-        main_fldr = os.path.join(constants.MODELS_DIR['main'], stamp)
-        self.stampfldr_ = main_fldr
-        os.mkdir(main_fldr)
+        self.stampfldr_ = os.path.join(constants.MODELS_DIR['main'], stamp)
+        os.mkdir(self.stampfldr_)
 
-        utils.save_experiment_params(main_fldr, exp_params)
+        utils.save_experiment_params(self.stampfldr_, exp_params)
 
         if self._expr_params is None:
             self._check_and_fill_expr_params( )
@@ -380,14 +388,14 @@ class Experiment:
 
         if self._DD_obj is not None:
             group_df = self._DD_obj.run()
-            group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
+            group_df.to_csv(os.path.join(self.stampfldr_,'group_df_beforeFixation.csv'))
             group_df.dropna(inplace=True)
             if exp_params['DD']['srs_type'] is not None:
                 category = constants.SRS_TEST_NAMES_MAP[exp_params['DD']['srs_type']]
                 group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
             else:
                 category = None
-            group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
+            group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
 
             # Drop Age, SEX, behavioral report, and behavioral category before feature selection
             _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)
@@ -396,16 +404,18 @@ class Experiment:
                 srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
                 final_diag = group_df.pop('DX_GROUP')
                 group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
-
         else:
-########################################################################################################################
-###################### HANDLE WHEN I DONT WANT DATADIVISOR BY READING THE CORRESPONDING DATA REPRESENTATION ########
-##################### YOU WILL NEED TO CREATE A DATADIR MAP TO HANDLE DIFFERENT INPUT FROM EXPERIMENT_DESIGN AND DIRECT
-## IT TO THE CORRECT REPRESENATION FOLDER ##############################################################################
-            group_df = pd.read_csv(constants.DATA_DIR[''])
-            group_df.to_csv(os.path.join(main_fldr,'group_df_beforeFixation.csv'))
-            group_df.to_csv(os.path.join(main_fldr,'group_df_afterFixation.csv'))
-#########################################################################################################################
+            data_repr_available = False
+            for key, repr_list in constants.DATA_REPR_MAP.items():
+                if self.data_repr in repr_list:
+                    self.data_repr = key
+                    data_repr_available = True
+                    break
+            if not data_repr_available:
+                raise ValueError(f'Data representation should be one of the following {list(constants.DATA_REPR_MAP.keys())}')
+            group_df = pd.read_csv(constants.DATA_DIR[self.data_repr], index_col = 0)
+            group_df.to_csv(os.path.join(self.stampfldr_,'group_df_beforeFixation.csv'))
+            group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
 
         group_df = group_df.sample(frac=1, random_state=132)
 
@@ -424,7 +434,7 @@ class Experiment:
 
             if normalizer is not None:
                 utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer)
-            utils.save_model(os.path.join(main_fldr, "FS_obj"), self._FS_obj.rfe_)
+            utils.save_model(os.path.join(self.stampfldr_, "FS_obj"), self._FS_obj.rfe_)
 
             self._save_selected_feats_json(self.FS_selected_feats_)
             self._plot_score_grid(self._FS_obj.rfe_)
@@ -462,13 +472,13 @@ class Experiment:
         # y = groupdf['DX_GROUP']
         # Xs = MinMaxScaler().fit_transform(groupdf.drop('DX_GROUP', axis=1))
         # self.stampfldr_ = "..\\models\\20210524_211225"
-        # main_fldr = self.stampfldr_
+        # self.stampfldr_ = self.stampfldr_
         # Xselected = {}
         # for key, fs in fs_obj.items():
         #     Xselected[key] = Xs[:, np.where(fs.support_)[0]]
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est=list(Xselected.keys()) if isinstance(Xselected, dict)
                                                                                     else exp_params['FS']['est'])
-        utils.save_model(os.path.join(main_fldr, "ML_obj"), self._ML_obj.grid)
+        utils.save_model(os.path.join(self.stampfldr_, "ML_obj"), self._ML_obj.grid)
 
         self._save_ML_scores(Xselected, self.ML_grid_)
         self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
