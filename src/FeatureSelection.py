@@ -1,11 +1,14 @@
+import sklearn.datasets
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import StratifiedKFold
 from sklearn.feature_selection import RFECV, SelectorMixin
+from sklearn.datasets import make_classification
 import constants
 from sklearn import base
 import numpy as np
 import os
 import dill
+from warnings import warn
 
 class FeatureSelector(SelectorMixin, base.BaseEstimator):
     def __init__(self, est='lsvm', selector_method='rfe'):
@@ -23,6 +26,23 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         self.scores_ = None
         self.all_feats_=None
 
+    def _check_valid_selector(self, fixed_est):
+        X, y = make_classification(n_samples=100, n_features=10, n_informative=5, n_redundant=5)
+        if isinstance(fixed_est, dict):
+            correct_selectors = {}
+            for key, sel in fixed_est.items():
+                sel.fit(X, y)
+                if ('coef_' in sel.__dict__) or ('feature_importances_' in sel.__dict__):
+                    correct_selectors[key] = base.clone(sel)
+                else:
+                    warn(f"{key} can't be used for feature selection")
+        else:
+            fixed_est.fit(X, y)
+            if ('coef_' in fixed_est.__dict__) or ('feature_importances_' in fixed_est.__dict__):
+                correct_selectors = base.clone(fixed_est)
+            else:
+                raise KeyError(f"{fixed_est.__str__()} can't be used for feature selection")
+        return correct_selectors
 
     def _handle_estimator(self, est):
         fixed_est = None
@@ -41,8 +61,10 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         else:
             raise ValueError(f'est should be a string with classifier name, list with classifier names, '
                              f'or classifier object')
-        return fixed_est
 
+        fixed_est = self._check_valid_selector(fixed_est)
+
+        return fixed_est
 
     def _get_est_from_mlobj(self, maindir, mlobj):
         if not isinstance(mlobj, dict):
@@ -53,7 +75,6 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
 
         classifiers_dict = mlobj['None']
         return classifiers_dict
-
 
     def _get_clc_from_str(self, est_name:str):
         if os.path.isdir(est_name):
@@ -68,7 +89,7 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         else:
             for key, list_names in constants.AVAILABLE_CLASSIFIERS_MAP.items():
                 if est_name in list_names:
-                    return constants.CLC_DICT[key]
+                    return constants.CLC_DICT[key]()
         raise ValueError(f'estimator name should be one of the following {constants.AVAILABLE_CLASSIFIERS_MAP.keys()}')
 
     def fit(self, X, y, **rfecv_params):
