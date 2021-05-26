@@ -32,7 +32,8 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
             correct_selectors = {}
             for key, sel in fixed_est.items():
                 sel.fit(X, y)
-                if ('coef_' in sel.__dict__) or ('feature_importances_' in sel.__dict__):
+                if ('coef_' in sel.__dict__) or ('feature_importances_' in sel.__dict__) or \
+                        ('coef_' in dir(sel)) or ('feature_importances_' in dir(sel)):
                     correct_selectors[key] = base.clone(sel)
                 else:
                     warn(f"{key} can't be used for feature selection")
@@ -101,6 +102,7 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
                                        min_features_to_select=self.min_features_to_select)
             for key, val in self.rfe_.items():
                 self.rfe_[key].fit(X, y)
+
         else:
             self.rfe_ = RFECV(self.est, cv=self.cv, scoring=self.scoring, n_jobs=self.n_jobs,
                                        verbose=self.verbose, step=self.step,
