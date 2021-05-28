@@ -484,8 +484,6 @@ class Experiment:
         self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
 
 
-
-
     def set_params(self, **params):
         item = params.get(next(iter(params)))
         if isinstance(item, dict):
