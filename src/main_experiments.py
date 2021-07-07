@@ -481,6 +481,19 @@ class Experiment:
         utils.save_model(os.path.join(self.stampfldr_, "ML_obj"), self._ML_obj.grid)
 
         self._save_ML_scores(Xselected, self.ML_grid_)
+#         self.stampfldr_ = '..\\models\\20210527_220608'
+#         df = pd.read_csv(os.path.join(self.stampfldr_, 'group_df_afterFixation.csv'), index_col=0)
+#         with open(os.path.join(self.stampfldr_, 'FS_obj.p'), 'rb') as f:
+#             fsobj = dill.load(f)
+#         with open(os.path.join(self.stampfldr_, 'ML_obj.p'), 'rb') as f:
+#             mlobj = dill.load(f)
+#         df.drop(['DX_GROUP','AGE_AT_SCAN ','SEX','SRS_COMMUNICATION_T','categories_COMMUNICATION'], axis=1, inplace=True)
+#         Xs = StandardScaler().fit_transform(df.drop('my_labels', axis=1))
+#         y = df['my_labels']
+#         Xselected = {}
+#         for fkey, rfe in fsobj.items():
+#             Xselected[fkey] = Xs[:, np.where(rfe.support_)[0]]
+#         self.ML_grid_ = mlobj
         self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_)
 
 

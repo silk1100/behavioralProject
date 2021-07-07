@@ -1,4 +1,4 @@
-from main_experiments import  Experiment
+from main_experiments import Experiment
 
 experiment_1 = {
         'data_repr': 'median',

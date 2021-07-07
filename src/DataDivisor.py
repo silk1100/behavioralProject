@@ -18,7 +18,8 @@ import constants
 
 
 class DataDivisor:
-    def __init__(self, data: pd.DataFrame=None, phenofile: pd.DataFrame=None, behavioral: str=None):
+    def __init__(self, data: pd.DataFrame=None, phenofile: pd.DataFrame=None,
+                 behavioral: str=None):
         self.df = self._handle_data_input(data)
 
         self.df_pheno = self._handle_pheno_input(phenofile)
@@ -95,7 +96,8 @@ class DataDivisor:
             if self.report_type.lower() in col.lower():
                 self.behavioral_columns_.append(col)
 
-    def divide(self, phenotypes:dict=None, behavioral_type:str = None) -> pd.DataFrame:
+    def divide(self, phenotypes:dict=None,
+               behavioral_type:str=None) -> pd.DataFrame:
         """
         phenotype should be a dictionary with keys as phenotype labels e.g (mild, moderate, sever).
         A new column will be added to the data with a label corresponding to each subject based on their
@@ -127,7 +129,8 @@ class DataDivisor:
             df.to_csv(os.path.join(constants.DATA_DIV_DIR[srs_test],f'{srs_test}.csv'),
                                    index_label='subj_id')
 
-    def _validity_srs_test_type(self, srs_test_type:str) -> tuple:
+    def _validity_srs_test_type(self,
+                                srs_test_type:str) -> tuple:
         if srs_test_type is None:
             return None, None
         file_path = None
@@ -154,12 +157,14 @@ class DataDivisor:
 
         return file_path, correct_srs_test_type
 
-    def _validate_severity_level(self, severity_level:str) -> bool:
+    def _validate_severity_level(self,
+                                 severity_level:str) -> bool:
         if severity_level in constants.SEVERITY_LEVEL_AVAILABLE:
             return True
         return False
 
-    def get_group(self, srs_test_type:str, severity_level:str, age_group:tuple=None, gender:str=None)->pd.DataFrame:
+    def get_group(self, srs_test_type:str, severity_level:str,
+                  age_group:tuple=None, gender:str=None)->pd.DataFrame:
         try:
             file_path, correct_srs_test_type = self._validity_srs_test_type(srs_test_type)
         except Exception:
@@ -186,7 +191,7 @@ class DataDivisor:
 
         return group_df
 
-    def set_params(self, **params):
+    def set_params(self, **params) -> None:
         for key, val in params.items():
             if key in self.__dict__.keys():
                 setattr(self, key, val)
@@ -213,4 +218,3 @@ if __name__ == '__main__':
     divisor = DataDivisor()
     df = divisor.get_group('comm','sever')
     x = 0
-

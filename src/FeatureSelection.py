@@ -13,7 +13,7 @@ from warnings import warn
 class FeatureSelector(SelectorMixin, base.BaseEstimator):
     def __init__(self, est='lsvm', selector_method='rfe'):
         self.est = self._handle_estimator(est)
-        self.cv=StratifiedKFold(5, shuffle=True, random_state=123)
+        self.cv = StratifiedKFold(5, shuffle=True, random_state=123)
         self.scoring = 'accuracy'
         self.n_jobs = -1
         self.verbose = 3
