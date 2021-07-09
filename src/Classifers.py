@@ -2,6 +2,7 @@ import constants
 import sklearn.base as base
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from collections import defaultdict
+from sklearn import clone
 import os
 import dill
 
@@ -112,7 +113,8 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         self.set_params(**fit_params)
         if isinstance(X, dict):
             for rfe_sel, Xarr in X.items():
-                self.output_models_[rfe_sel][self._clc_key] = self.grid.fit(Xarr, y)
+                myclc = clone(self.grid)
+                self.output_models_[rfe_sel][self._clc_key] = myclc.fit(Xarr, y)
         else:
             self.output_models_[self.selector_est_][self._clc_key] = self.grid.fit(X, y)
         # return self.grid
@@ -123,10 +125,12 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
         if isinstance(X, dict):
             for rfe_sel, Xarr in X.items():
                 for clc in self.grid:
-                    self.output_models_[rfe_sel][clc] = self.grid[clc].fit(Xarr, y)
+                    myclc = clone(self.grid[clc])
+                    self.output_models_[rfe_sel][clc] = myclc.fit(Xarr, y)
         else:
             for clc in self.grid:
-                self.output_models_[self.selector_est_][clc] = self.grid[clc].fit(X, y)
+                myclc = clone(self.grid[clc])
+                self.output_models_[self.selector_est_][clc] = myclc.fit(X, y)
         # return self.grid
         return self.output_models_
 
@@ -140,19 +144,22 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     def _single_predict(self, X):
         if isinstance(X, dict):
             for rfe_sel, Xarr in X.items():
-                self.output_predictions_[rfe_sel][self._clc_key] = self.grid.predict(Xarr)
+                self.output_predictions_[rfe_sel][self._clc_key] = \
+                    self.output_models_[rfe_sel][self._clc_key].predict(Xarr)
         else:
-            self.output_predictions_[self.selector_est_][self._clc_key] = self.grid.predict(X)
+            self.output_predictions_[self.selector_est_][self._clc_key] = \
+                self.output_models_[self.selector_est_][self._clc_key].predict(X)
         return self.output_predictions_
 
     def _mult_predict(self, X):
         if isinstance(X, dict):
             for rfe_sel, Xarr in X.items():
                 for clc in self.grid:
-                    self.output_predictions_[rfe_sel][clc] = self.grid[clc].predict(Xarr)
+                    self.output_predictions_[rfe_sel][clc] = self.output_models_[rfe_sel][clc].predict(Xarr)
         else:
             for clc in self.grid:
-                self.output_predictions_[self.selector_est_][clc] = self.grid[clc].predict(X)
+                self.output_predictions_[self.selector_est_][clc] = \
+                    self.output_models_[self.selector_est_][clc].predict(X)
 
         # return results
         return self.output_predictions_
@@ -160,19 +167,24 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     def _single_predict_proba(self, X):
         if isinstance(X, dict):
             for rfe_sel, Xarr in X.items():
-                self.output_predictions_[rfe_sel][self._clc_key] = self.grid.predict_log(Xarr)
+                self.output_predictions_[rfe_sel][self._clc_key] = \
+                    self.output_models_[rfe_sel][self._clc_key].predict_log(Xarr)
         else:
-            self.output_predictions_[self.selector_est_][self._clc_key] = self.grid.predict_log(X)
+            self.output_predictions_[self.selector_est_][self._clc_key] = \
+                self.output_models_[self.selector_est_][self._clc_key].predict_log(X)
+
         return self.output_predictions_
 
     def _mult_predict_proba(self, X):
         if isinstance(X, dict):
             for rfe_sel, Xarr in X.items():
                 for clc in self.grid:
-                    self.output_predictions_log_[rfe_sel][clc] = self.grid[clc].predict_proba(Xarr)
+                    self.output_predictions_log_[rfe_sel][clc] = \
+                        self.output_models_[rfe_sel][clc].predict_proba(Xarr)
         else:
             for clc in self.grid:
-                self.output_predictions_[self.selector_est_][clc] = self.grid[clc].predict_proba(X)
+                self.output_predictions_[self.selector_est_][clc] = \
+                    self.output_models_[self.selector_est_][clc].predict_proba(X)
         return self.output_predictions_log_
 
     def predict(self, X):

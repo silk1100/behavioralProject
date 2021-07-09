@@ -55,7 +55,8 @@ DATA_DIR = {
 
 MODELS_DIR = {
     'main': '../models',
-    'config':'../models/exper_conf'
+    'config':'../models/exper_conf',
+    'production': '../selected_models_for_production'
 }
 
 
