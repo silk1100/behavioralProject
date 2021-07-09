@@ -344,7 +344,7 @@ class Experiment:
                 results_dict[krf][kml]['f1'] = f1_score(yhat, ytest)
                 results_dict[krf][kml]['PPV'] = precision_score(yhat, ytest)
                 results_dict[krf][kml]['NPV'] = NPV
-                results_dict[krf][kml]['auc'] = roc_auc_score(yhat, ytest)
+                # results_dict[krf][kml]['auc'] = roc_auc_score(yhat, ytest)
 
             plt.savefig(f'{os.path.join(self.stampfldr_, f"ROC_{krf}_{kml}.png")}', bbox_inches='tight')
             plt.cla()

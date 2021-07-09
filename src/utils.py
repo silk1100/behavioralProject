@@ -24,13 +24,13 @@ def save_experiment_params(fldr, exp):
 
 
 def save_model(fname, model):
-    if '.' in fname[-5:]:
-        file = fname.split('.')[0]
-    else:
+    if fname.endswith('.p'):
         file = fname
+    else:
+        file = fname+'.p'
 
-    with open(file+'.p', 'wb') as f:
-        dill.dump(model, f, recurse=True)
+    with open(file, 'wb') as f:
+        dill.dump(model, f)
 
 class DataModelLoader:
     """
