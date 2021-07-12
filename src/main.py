@@ -4,13 +4,13 @@ experiment_1 = {
         'data_repr': 'median',
         'normalizer':'std',
         'DD':{
-            'srs_type': 'comm',#'cog',comm
+            'srs_type': 'awa',#'cog',comm
             'severity_group': 'sever',
             'age_group': None,
             'divide_data': False,
         },
         'FS':{
-            'est': ['lsvm','lr','xgb', 'rf', 'gbt'], # Either this or the directory to a model folder with ML_obj.p in it (as below)
+            'est': ['lsvm','lr','xgb', 'rf'], # Either this or the directory to a model folder with ML_obj.p in it (as below)
             # 'est': "../models/FS_Hyperparameters_Comm/", # If it is a directory, then Read the classifiers in MLobj
             'cv': 5,
             'scoring':'balanced_accuracy',

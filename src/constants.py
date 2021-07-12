@@ -206,7 +206,7 @@ SRS_TEST_T = list(DATA_DIV_DIR.keys())
 
 SRS_TEST_NAMES_MAP = {
     'comm':'SRS_COMMUNICATION_T',
-    'mot':'SRS_COMMUNICATION_T',
+    'mot':'SRS_MOTIVATION_T',
     'cog':'SRS_COGNITION_T',
     'awa':'SRS_AWARENESS_T',
     'man':'SRS_MANNERISMS_T',
