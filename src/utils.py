@@ -32,6 +32,36 @@ def save_model(fname, model):
     with open(file, 'wb') as f:
         dill.dump(model, f)
 
+class ProductionModelLoader:
+    """
+    Load a dictionary containing an "almost" pipeline containing trained (Normalizer, RFE, trainedML) which are created
+    by "../notebooks/train_models_tobeusedin_production"
+    """
+    def __init__(self, model_dict_fileloc:str=None):
+        self.models_dict_dir = model_dict_fileloc if model_dict_fileloc is not None \
+            else "../selected_models_for_production/trained_normalizer_rfe_models.p"
+
+    def _check_if_model_dict_is_loaded(self):
+        if 'models_dict_' in self.__dict__:
+            return True
+        return False
+
+    def load(self):
+        with open(self.models_dict_dir, 'rb') as f:
+            self.models_dict_ = dill.load(f)
+        return self.models_dict_
+
+    def get_available_behavioral_tests(self):
+        if not self._check_if_model_dict_is_loaded():
+            raise BrokenPipeError('Run load() method before accessing any of the models')
+        return list(self.models_dict_.keys()), [constants.SRS_TEST_NAMES_MAP[x] for x in self.models_dict_]
+
+    def get_model_from_behavioral_test(self, behav_test, model_type):
+        if not self._check_if_model_dict_is_loaded():
+            raise BrokenPipeError('Run load() method before accessing any of the models')
+        return self.models_dict_.get(behav_test).get(model_type)
+
+
 class DataModelLoader:
     """
     Load a behavioral model to be used for prediction of a new subject(s)
@@ -46,7 +76,7 @@ class DataModelLoader:
         else:
             self.models_dir = constants.MODELS_DIR['production']
 
-    def _load_fs_ml(self, models_path):
+    def _load_norm_fs_ml(self, models_path):
         models_dict = {}
         for model in models_path:
             model_files = [os.path.join(model, x) for x in os.listdir(model) if x.endswith('.p')]
@@ -55,16 +85,19 @@ class DataModelLoader:
             fs_model = None
             for file in model_files:
                 obj_file_name = file.split('\\')[-1]
-                if 'FS' in obj_file_name:
+                if 'FS_' in obj_file_name:
                     try:
                         with open(file, 'rb') as f:
                             fs_model = dill.load(f)
                     except Exception:
                         fs_model = None
-                elif 'ML' in obj_file_name:
+                elif 'ML_' in obj_file_name:
                     with open(file, 'rb') as f:
                         ml_model = dill.load(f)
-            models_dict[module_name] = {'fs': fs_model, 'ml':ml_model}
+                elif 'normalizer.' in obj_file_name:
+                    with open(file, 'rb') as f:
+                        normalizer = dill.load(f)
+            models_dict[module_name] = {'dir':model,'normalizer':normalizer, 'fs': fs_model, 'ml':ml_model}
 
         return models_dict
 
@@ -89,8 +122,8 @@ class DataModelLoader:
     def load(self):
         models_path = [os.path.join(self.models_dir, x) for x in os.listdir(self.models_dir)
                   if os.path.isdir(os.path.join(self.models_dir, x))]
-        models_dict = self._load_fs_ml(models_path)
-        json_dict = self._load_fs_ml(models_path)
+        models_dict = self._load_norm_fs_ml(models_path)
+        json_dict = self._load_json(models_path)
         return models_dict, json_dict
 
 

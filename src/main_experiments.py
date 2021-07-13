@@ -433,6 +433,7 @@ class Experiment:
             self.FS_grid_scores_ = self._FS_obj.scores_
 
             if normalizer is not None:
+
                 utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer)
             utils.save_model(os.path.join(self.stampfldr_, "FS_obj"), self._FS_obj.rfe_)
 
