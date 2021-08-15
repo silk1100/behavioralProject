@@ -27,6 +27,7 @@ class DataDivisor:
             self.df_pheno.set_index('subj_id', inplace=True)
 
         self.report_type = behavioral if behavioral is not None else 'srs'
+        self.data_repr = 'medianMmedianP' if data is None else data
         self.srs_type=None
         self.severity_group=None
         self.age_group=None
@@ -70,16 +71,16 @@ class DataDivisor:
             if isinstance(data, pd.DataFrame):
                 df = data
             elif isinstance(data, str):
-                if data in self.FEATURE_REPR[0]:
+                if 'median' in data:
                     file_path = constants.DATA_DIR['medianMmedianP']
-                elif data in self.FEATURE_REPR[1]:
+                elif 'percentile' in data:
                     file_path = constants.DATA_DIR['percentile']
                 else:
                     raise ValueError(f'string represtation of data should be one of the following: {self.FEATURE_REPR}')
                 df = pd.read_csv(file_path)
             else:
                 raise TypeError(f'{data} is expected to be the feature data frame, str to the type of features'
-                                f'{self.FEATURE_REPR}')
+                                f'{constants.DATA_REPR_MAP.keys()}')
         if 'subj_id' in df.columns:
             df.set_index('subj_id', inplace=True)
         else:
@@ -126,7 +127,7 @@ class DataDivisor:
             df[f'categories_{srs_test.split("_")[1]}'] = df[srs_test].apply(divisor)
             if not os.path.isdir(constants.DATA_DIV_DIR[srs_test]):
                 os.mkdir(constants.DATA_DIV_DIR[srs_test])
-            df.to_csv(os.path.join(constants.DATA_DIV_DIR[srs_test],f'{srs_test}.csv'),
+            df.to_csv(os.path.join(constants.DATA_DIV_DIR[srs_test],f'{self.data_repr}_{srs_test}.csv'),
                                    index_label='subj_id')
 
     def _validity_srs_test_type(self,
@@ -136,12 +137,12 @@ class DataDivisor:
         file_path = None
         correct_srs_test_type = srs_test_type
         if srs_test_type in constants.DATA_DIV_DIR:
-            file_path = os.path.join(constants.DATA_DIV_DIR[srs_test_type], f'{srs_test_type}.csv')
+            file_path = os.path.join(constants.DATA_DIV_DIR[srs_test_type], f'{self.data_repr}_{srs_test_type}.csv')
 
         elif srs_test_type in constants.SRS_TEST_NAMES_MAP:
             file_path = os.path.join(
                 constants.DATA_DIV_DIR[constants.SRS_TEST_NAMES_MAP[srs_test_type]],
-                f'{constants.SRS_TEST_NAMES_MAP[srs_test_type]}.csv')
+                f'{self.data_repr}_{constants.SRS_TEST_NAMES_MAP[srs_test_type]}.csv')
             correct_srs_test_type = constants.SRS_TEST_NAMES_MAP[srs_test_type]
         else:
             for srs_t in constants.SRS_TEST_NAMES_MAP[srs_test_type]:
@@ -149,7 +150,7 @@ class DataDivisor:
                     correct_srs_test_type = constants.SRS_TEST_NAMES_MAP[srs_test_type]
                     file_path = os.path.join(
                         constants.DATA_DIV_DIR[correct_srs_test_type],
-                        f'{correct_srs_test_type}.csv')
+                        f'{self.data_repr}_{correct_srs_test_type}.csv')
                     break
 
         if file_path is None:

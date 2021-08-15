@@ -102,29 +102,51 @@ class BehavioralDiagnosis:
         for behav_model in self.models:
             preprocessor = NormalizeSelect(normalizer=self.models[behav_model]['normalizer'],
                                            rfe=self.models[behav_model]['rfe'])
-            self.pipelines_dict_[behav_model] = Pipeline(
+            self.pipelines_dict_[behav_model] = (Pipeline(
                 [
                     ('preprocessor', preprocessor),
                     ('ml', self.models[behav_model]['ml'])
                 ]
-            )
+            ), self.models[behav_model]['score'])
         return self.pipelines_dict_
 
     def _combine_pipelines(self, X):
         self.predictions_ = {}
-        for name, pipe in self.pipelines_dict_.items():
+        for name, (pipe, score) in self.pipelines_dict_.items():
             self.predictions_[name] = pipe.predict(X)
         return self.predictions_
+
+    def adjust_predictions(self, predictions, score):
+        if score <= 0.5:
+            score = 0.5
+        updated_predictions = np.array(predictions, dtype=np.double)
+        for idx, pred in enumerate(predictions):
+            if pred == 1:
+                updated_predictions[idx] = pred + (1 - score)
+            elif pred == 2:
+                updated_predictions[idx] = pred - (1 - score)
+        return updated_predictions
+
 
     def predict(self, X, method='performance_weighted'):
         self._create_pipelines()
         self._combine_pipelines(X)
         predictions_list = []
-        for _, predictions in self.predictions_.items():
+        scores_list = []
+        for key, predictions in self.predictions_.items():
             predictions_list.append(predictions)
-        predictions_matrix = np.stack(predictions_list, axis=1)
-        majority_voting = stats.mode(predictions_matrix, axis=1)[0]
-        return majority_voting
+            scores_list.append(self.pipelines_dict_[key][1])
+        if method =='majority_voting':
+            predictions_matrix = np.stack(predictions_list, axis=1)
+            final_scores = stats.mode(predictions_matrix, axis=1)[0]
+        elif method == 'weighted_average':
+            predictions_matrix = np.zeros((len(predictions_list[0]), len(predictions_list)))
+            for idx, pred in enumerate(predictions_list):
+                adj_scores = self.adjust_predictions(pred, scores_list[idx])
+                predictions_matrix[:, idx] = adj_scores
+            final_scores = np.round(np.mean(predictions_matrix, axis=1))
+
+        return final_scores
 
 
 
@@ -140,13 +162,13 @@ if __name__ == '__main__':
     my_label_cols = [col for col in df.columns if 'severity_label' in col]
     labels = df[my_label_cols]
     X = df.drop(my_label_cols, axis=1)
-    y_hat = b.predict(X)
+    y_hat = b.predict(X, 'weighted_average')
     C = confusion_matrix(original_labels, y_hat)
     tp = C[0, 0]
     tn = C[1, 1]
     fp = C[1, 0]
     fn = C[0, 1]
-    print(f'senstivity: {recall_score(y_true=original_labels, y_pred=y_hat)}')
+    print(f'sensitivity: {recall_score(y_true=original_labels, y_pred=y_hat)}')
     print(f'specificity : {tn / (tn + fp)}')
     print(f'balanced accuracy : {balanced_accuracy_score(y_true=original_labels, y_pred=y_hat)}')
     print(f'f1 : {f1_score(y_true=original_labels, y_pred=y_hat)}')

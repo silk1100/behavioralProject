@@ -372,6 +372,8 @@ class Experiment:
             self._check_and_fill_expr_params( )
 
         if 'DD' in self._expr_params:
+            if 'median' not in self.data_repr:
+                self._DD_obj = DataDivisor.DataDivisor(data=self.data_repr)
             self._DD_obj.set_params(**self._expr_params['DD'])
         else:
             self._DD_obj = None

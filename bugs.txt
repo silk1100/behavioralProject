@@ -39,4 +39,14 @@
 	1. utils.save_model(os.path.join(self.stampfldr_, 'Xselected.p'), (Xselected, y)) # Doesnt work (never executed)
 	2. utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer) # Doesnt work (never executed)
 	3. self._create_pseudo_scores(Xselected, y, ml_obj=self.ML_grid_) # Keeps crashing with weird errors like (ValueError: X has 34 features, but DecisionTreeRegressor is expecting 535 features as input)
-	4. If one of the classifiers loaded to be utilized in feature selection doesn't have coef_ or feature_importances_, then the code crashes/
+	4. If one of the classifiers loaded to be utilized in feature selection doesn't have coef_ or feature_importances_, then the code crashes
+
+	[SOLVED!!] The bug was deeper than what I've thought. It is related to Classifiers.py file. It overwrites the classifiers when they are written in the dictionary.
+	           Therefore I get different # of input features for classifiers and it was a mess.
+
+
+********************************************************************************************************************************************************************************
+** main_experiments.py
+	* BUG TYPE: Coding-Technical-Implementation
+	1. Experiment class accepts only data from experiment_designer.py file and if you send to it a data file to process, it ignores the file and just load the one inside
+	experiment_designer.py
