@@ -16,6 +16,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import (confusion_matrix, recall_score, f1_score, accuracy_score, balanced_accuracy_score)
 import dill
 
+
 class NormalizeSelect(BaseEstimator, TransformerMixin):
     """
     Passed normalizer and rfe are expected to be trained and only used for transforming the data
@@ -55,7 +56,6 @@ class NormalizeSelect(BaseEstimator, TransformerMixin):
                             self.rfe = dill.load(f)
                     else:
                         self.rfe = params_dict[arg]
-
 
     def fit(self, X, y):
         return self
@@ -127,9 +127,8 @@ class BehavioralDiagnosis:
                 updated_predictions[idx] = pred - (1 - score)
         return updated_predictions
 
-
     def predict(self, X, method='performance_weighted'):
-        self._create_pipelines()
+        self._create_pipelines() # needs to be in the __init__()
         self._combine_pipelines(X)
         predictions_list = []
         scores_list = []

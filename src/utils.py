@@ -6,9 +6,11 @@ import dill
 from sklearn.pipeline import Pipeline
 import constants
 
+
 def get_time_stamp():
     dt = datetime.datetime.now()
     return dt.strftime("%Y%m%d_%H%M%S")
+
 
 def load_experiment(file):
     with open(file, 'r') as f:
@@ -31,6 +33,29 @@ def save_model(fname, model):
 
     with open(file, 'wb') as f:
         dill.dump(model, f)
+
+
+def load_classifier_from_hyperparameterJson(json_fldr):
+    json_files = [x for x in os.listdir(json_fldr)]
+    clc_dict = {}
+    for file in json_files:
+        rfe, ml = file.split('_')
+        clc_dict[rfe] = {}
+    for file in json_files:
+        full_path = os.path.join(json_fldr, file)
+        print(full_path)
+        with open(full_path, 'r') as f:
+            data = json.load(f)
+        rfe_clc, ml_clc = file.split('_')
+        clc = constants.CLC_DICT[ml_clc]()
+        for x in clc.get_params().keys():
+            if x not in data.keys():
+                print(f'{file} missing {x}')
+        hypparam_dict = {x:data[x] for x in clc.get_params().keys()}
+        clc.set_params(**hypparam_dict)
+        clc_dict[rfe_clc][ml_clc] = clc
+    return clc_dict
+
 
 class ProductionModelLoader:
     """
@@ -152,7 +177,12 @@ class DataFixation:
         df.loc[indices, 'subj_id'] = vals
         return df
 
+
+
+
 if __name__ == '__main__':
-    loader = DataModelLoader()
-    m_dict, j_dict = loader.load()
-    x=0
+    # loader = DataModelLoader()
+    # m_dict, j_dict = loader.load()
+    # x=0
+    clc_dict = load_classifier_from_hyperparameterJson('../models/20210815_170500_perc_ubuntu_mot/ML_obj_hyperparams')
+    print(clc_dict)
