@@ -195,24 +195,34 @@ class ProductionModelCreator:
             self.top_rfe_ml_per_model_[fldr] = (rfe, ml)
         print(f'Location of models: (RFE_OBJECT, ML_OBJECT)\n{self.top_rfe_ml_per_model_}')
 
+    def _test_the_pipeline(self, fldr, normalizer, rfe_obj, ml_obj, behav_name):
+        if os.path.isfile(os.path.join(fldr, 'group_df_afterFixation.csv')):
+            df = pd.read_csv(os.path.join(fldr, 'group_df_afterFixation.csv'), index_col=0)
+        else:
+            df = pd.read_csv(os.path.join(fldr, 'group_df_beforeFixation.csv'), index_col=0)
+
+        cols_2_del = ['DX_GROUP','AGE_AT_SCAN ', 'SEX']
+        for col in df.columns:
+            if 'categories_' in col:
+                cols_2_del.append(col)
+            elif 'SRS_' in col:
+                cols_2_del.append(col)
+        df.drop(cols_2_del, axis=1, inplace=True)
+        X = df.drop('my_labels', axis=1)
+        y = df['my_labels'].values
+        Xs = normalizer.transform(X)
+        Xselected = rfe_obj.transform(Xs)
+        trained_obj = ml_obj.fit(Xselected, y)
+        yhat = trained_obj.predict(Xselected)
+        score = balanced_accuracy_score(y, yhat)
+        print(f'{behav_name}: {confusion_matrix(y,yhat)}')
+        return trained_obj, score
+
     def create_production_models_dict(self):
         self.production_models_ = {}
         self.cross_platform_failures_ = []
         for fldr in self.fldrs_:
             behav_name = fldr.split('_')[-1]
-            if os.path.isfile(os.path.join(fldr, 'group_df_afterFixation.csv')):
-                df = pd.read_csv(os.path.join(fldr, 'group_df_afterFixation.csv'), index_col=0)
-            else:
-                df = pd.read_csv(os.path.join(fldr, 'group_df_beforeFixation.csv'), index_col=0)
-
-            cols_2_del = ['DX_GROUP','AGE_AT_SCAN ', 'SEX']
-            for col in df.columns:
-                if 'categories_' in col:
-                    cols_2_del.append(col)
-                elif 'SRS_' in col:
-                    cols_2_del.append(col)
-            df.drop(cols_2_del, axis=1, inplace=True)
-            
             with open(os.path.join(fldr,'normalizer.p'), 'rb') as f:
                 normalizer = dill.load(f)
 
@@ -230,18 +240,13 @@ class ProductionModelCreator:
                 self.cross_platform_failures_.append(fldr)
                 continue
 
-            X = df.drop('my_labels', axis=1)
-            y = df['my_labels'].values
-            Xs = normalizer.transform(X)
-            
             selected_rfe = self.top_rfe_ml_per_model_[fldr][0]
             selected_ml = self.top_rfe_ml_per_model_[fldr][1]
-            
-            Xselected = fs_obj[selected_rfe].transform(Xs)
-            trained_obj = ml_obj[selected_rfe][selected_ml].best_estimator_.fit(Xselected, y)
-            yhat = trained_obj.predict(Xselected)
-            score = balanced_accuracy_score(y, yhat)
-            print(f'{behav_name}: {confusion_matrix(y,yhat)}')
+            rfe_obj = fs_obj[selected_rfe]
+            ml_obj = ml_obj[selected_rfe][selected_ml].best_estimator_
+
+            trained_obj, score = self._test_the_pipeline(fldr, normalizer=normalizer,
+             rfe_obj=rfe_obj, ml_obj=ml_obj, behav_name=behav_name)
 
             self.production_models[behav_name] = {
                 'normalizer': normalizer,
@@ -259,10 +264,7 @@ class ProductionModelCreator:
             if not os.path.isdir(os.path.join(fldr, 'ML_obj_hyperparams')):
                 raise FileNotFoundError(f'Will try to create json files out of the ML models because ML_obj_hyperparams folder'
                 f'doesnt exist in {fldr}')
-                # print(f'Will try to create json files out of the ML models because ML_obj_hyperparams folder'
-                # f'doesnt exist in {fldr}')
-                # create_hyperparameterJson_from_classifier(fldr)
-            # load_classifier_from_hyperparameterJson
+
             json_files = []
 
 
