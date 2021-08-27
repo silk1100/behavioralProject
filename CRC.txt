@@ -1,0 +1,20 @@
+BASIC CRC
+scratch -> /scratch/global/$USER (Not backedup) (Up to 2 TB)
+home -> /home/$USER (Limit to 500 GB)
+command -> qsub -q dev -l nodes=1:ppn=8,walltime=24:00:00 pyJob.sh
+
+BigData (bigdata.hpc.louisville.edu)
+Recommended for deep learning
+home -> /home/$USER  (Up to 4TB)
+no scratch
+
+
+Split hyperparameter optimization into multiple jobs
+
+
+start time - comp_time = walltime
+total_runtime
+etime = queuetime
+
+
+No connection with cardbox
