@@ -265,7 +265,10 @@ class ProductionModelCreator:
                 raise FileNotFoundError(f'Will try to create json files out of the ML models because ML_obj_hyperparams folder'
                 f'doesnt exist in {fldr}')
 
-            json_files = []
+            clc_dict = load_classifier_from_hyperparameterJson(os.path.join(fldr, 'ML_obj_hyperparams'))
+            
+
+
 
 
 
