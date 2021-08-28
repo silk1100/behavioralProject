@@ -11,9 +11,10 @@ from scipy import stats
 from sklearn.pipeline import Pipeline
 
 import constants
-from utils import DataModelLoader, ProductionModelLoader
+# from utils import DataModelLoader, ProductionModelLoader
+from ProductionModelCreator import ProductionModelCreator
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.metrics import (confusion_matrix, recall_score, f1_score, accuracy_score, balanced_accuracy_score)
+from sklearn.metrics import (confusion_matrix, recall_score, f1_score, balanced_accuracy_score)
 import dill
 
 
@@ -78,10 +79,20 @@ class BehavioralDiagnosis:
     def __init__(self, method='performance_weighted', models_dir: str=None):
         self.method = method
         self.models_dir = models_dir if models_dir is not None else constants.MODELS_DIR['production']
+        """
+        old code
+        """
         # loader = DataModelLoader(self.models_dir)
         # self.models, self.json_data = loader.load()
-        loader = ProductionModelLoader('../selected_models_for_production/trained_normalizer_rfe_models.p')
-        self.models = loader.load()
+        # loader = ProductionModelLoader('../selected_models_for_production/trained_normalizer_rfe_models.p')
+        # self.models = loader.load()
+        """
+        END load code
+        """
+        loader = ProductionModelCreator(self.models_dir)
+        loader.create_production_models_dict()
+        self.models = loader.production_models_
+
         print(f'Loaded behavioral models are: {[constants.SRS_TEST_NAMES_MAP[k] for k in self.models.keys()]}')
 
     # Obselete function. Currently there is a notebook "../notebooks/train_models_tobeusedin_production.ipynb" responsi-
@@ -153,7 +164,9 @@ if __name__ == '__main__':
     b = BehavioralDiagnosis()
     # pipes = b._create_pipelines()
     # Prepare data to be used for testing
-    df = pd.read_csv('../notebooks/raw_data_for_production_testing.csv', index_col=0)
+    # df = pd.read_csv('../notebooks/raw_data_for_production_testing.csv', index_col=0)
+    df = pd.read_csv('../notebooks/raw_data_perc_for_production_testing.csv', index_col=0)
+    
     srs_cols = [col for col in df.columns if 'SRS_' in col]
     df.dropna(inplace=True)
     original_labels = df['DX_GROUP'].values

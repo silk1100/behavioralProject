@@ -1,4 +1,6 @@
 import os.path
+import warnings
+
 import DataDivisor
 import FeatureSelection
 import Classifers
@@ -23,6 +25,7 @@ from collections import defaultdict
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (confusion_matrix, f1_score,accuracy_score,precision_score,
                             recall_score, roc_auc_score, plot_roc_curve)
+from sklearn.base import clone
 
 class Experiment:
     def __init__(self, **experiment_params):
@@ -108,6 +111,49 @@ class Experiment:
                 self._expr_params[obj_type]['_'.join(parts[1:])] = item
 
     def _check_and_fix_unbalance_groups(self, df_all:pd.DataFrame, df_group:pd.DataFrame, category: str)->pd.DataFrame:
+        def add_subjects2balance(added_group, converted_col_name, ASD_count, TD_count):
+            if added_group == 'TD':
+                df_td_G = df_all[df_all[converted_col_name] <= 59]  # _G stands for group
+                df_td = df_all[df_all['DX_GROUP'] == 2]
+
+                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
+                upper_bound = age_mean + age_std
+                lower_bound = age_mean - age_std
+                # df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
+                df_target1 = df_td_G.loc[
+                             (df_td_G['AGE_AT_SCAN '] >= lower_bound) & (df_td_G['AGE_AT_SCAN '] <= upper_bound), :]
+                df_target2 = df_td.loc[(df_td['AGE_AT_SCAN '] >= lower_bound) & (df_td['AGE_AT_SCAN '] <= upper_bound), :]
+                df_added = df_target1.sample(n=ASD_count - TD_count, random_state=1234)
+                if (len(df_added) + TD_count) / (len(df_added) + TD_count + ASD_count) < 0.4:
+                    df_added2 = df_target2.sample(n=ASD_count - TD_count - len(df_added), random_state=1)
+                    df_added = pd.concat([df_added, df_added2], axis=0)
+            elif added_group == 'ASD':
+                # Sample from ASD
+                df_asd = df_all[df_all['DX_GROUP'] == 1]
+                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
+                upper_bound = age_mean + age_std
+                lower_bound = age_mean - age_std
+                df_target = df_asd.loc[
+                            (df_asd['AGE_AT_SCAN '] >= lower_bound) & (df_asd['AGE_AT_SCAN '] <= upper_bound), :]
+                df_added = df_target.sample(n=TD_count - ASD_count, random_state=1)
+            else:
+                raise TypeError("Group should be either ASD or TD")
+            return df_added
+
+        def remove_subjects2balance(removed_group, converted_col_name, ASD_count, TD_count):
+            if removed_group == 'ASD':
+                df_asd = df[df_all['DX_GROUP']==1]
+                df_toberemoved = df_asd.sample(n=ASD_count - TD_count, random_state=1234)
+                updated_df = df_all.drop(df_toberemoved.index, axis=0)
+            elif removed_group == 'TD':
+                df_asd = df[df_all['DX_GROUP']==2]
+                df_toberemoved = df_asd.sample(n= TD_count - ASD_count, random_state=1234)
+                updated_df = df_all.drop(df_toberemoved.index, axis=0)
+            else:
+                raise TypeError("Group should be either ASD or TD")
+            return updated_df
+
+
         try:
             ASD_count = df_group['DX_GROUP'].value_counts()[1]
         except Exception:
@@ -123,35 +169,25 @@ class Experiment:
             ratio = ASD_count/(TD_count+ASD_count)
             more_ASd = False
 
+        category_col = [col for col in df_group.columns if col.startswith('categories_')][0].split('_')[1]
+        converted_col_name = f"SRS_{category_col}_T"
         if ratio < 0.4:
-            # Sample within the age group of the more group
             if more_ASd:
-                # Sample from TD
-                category_col = [col for col in df_group.columns if col.startswith('categories_')][0].split('_')[1]
-                converted_col_name = f"SRS_{category_col}_T"
-                df_td_G = df_all[df_all[converted_col_name]<= 59] # _G stands for group
-                df_td = df_all[df_all['DX_GROUP']==2]
-
-                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
-                upper_bound = age_mean+age_std
-                lower_bound = age_mean-age_std
-                # df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
-                df_target1 = df_td_G.loc[(df_td_G['AGE_AT_SCAN ']>=lower_bound) & (df_td_G['AGE_AT_SCAN ']<=upper_bound),:]
-                df_target2 = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
-                df_added = df_target1.sample(n=ASD_count-TD_count, random_state=1234)
-                if (len(df_added) + TD_count)/(len(df_added) + TD_count + ASD_count) < 0.4:
-                    df_added2 = df_target2.sample(n=ASD_count - TD_count-len(df_added), random_state=1)
-                    df_added = pd.concat([df_added, df_added2], axis=0)
+                if TD_count < 50:
+                    df_added = add_subjects2balance("TD", converted_col_name, ASD_count, TD_count)
+                    df_added = df_added[df_group.columns]
+                    df = pd.concat([df_group, df_added], axis=0)
+                else:
+                    df = remove_subjects2balance("ASD", converted_col_name, ASD_count, TD_count)
             else:
                 # Sample from ASD
-                df_asd = df_all[df_all['DX_GROUP']==1]
-                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
-                upper_bound = age_mean+age_std
-                lower_bound = age_mean-age_std
-                df_target = df_asd.loc[(df_asd['AGE_AT_SCAN ']>=lower_bound) & (df_asd['AGE_AT_SCAN ']<=upper_bound),:]
-                df_added = df_target.sample(n=TD_count-ASD_count, random_state=1)
-            df_added = df_added[df_group.columns]
-            df = pd.concat([df_group, df_added], axis=0)
+                if ASD_count < 50:
+                    df_added = add_subjects2balance("ASD", converted_col_name, ASD_count, TD_count)
+                    df_added = df_added[df_group.columns]
+                    df = pd.concat([df_group, df_added], axis=0)
+                else:
+                    df = remove_subjects2balance("TD", converted_col_name, ASD_count, TD_count)
+
         else:
             df = df_group
 
@@ -217,7 +253,6 @@ class Experiment:
             plt.savefig(f'{os.path.join(self.stampfldr_, "FS.png")}', bbox_inches='tight')
 
         plt.close(f)
-
 
     def _plot_feature_importance(self, df, rfe_obj):
         f = plt.figure(num=1, figsize=(18, 10))
@@ -320,8 +355,9 @@ class Experiment:
             Xstrain, Xstest, ytrain, ytest = train_test_split(Xselected[krf], y, test_size=0.2, random_state=231,
                                                               shuffle=True, stratify=y)
             for kml, ml_model in best_estimators_dict[krf].items():
-                best_estimators_dict[krf][kml].fit(Xstrain, ytrain)
-                yhat = best_estimators_dict[krf][kml].predict(Xstest)
+                clc = clone(best_estimators_dict[krf][kml])
+                clc = clc.fit(Xstrain, ytrain)
+                yhat = clc.predict(Xstest)
 
                 uax = plot_roc_curve(best_estimators_dict[krf][kml], Xstest, ytest, ax=ax)
                 uax.figure_.suptitle(f'RFE: {krf}, ML: {kml}')
@@ -398,6 +434,8 @@ class Experiment:
             else:
                 category = None
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
+            if len(group_df.index) != group_df.index.nunique():
+                warnings.warn("There are duplicate subjects in the data after fixation")
 
             # Drop Age, SEX, behavioral report, and behavioral category before feature selection
             _, srs_col_name = self._DD_obj._validity_srs_test_type(self.DD_srs_type)

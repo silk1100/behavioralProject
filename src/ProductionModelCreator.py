@@ -150,11 +150,10 @@ class ProductionModelCreator:
             trained_obj, score = self._test_the_pipeline(fldr, normalizer=normalizer,
              rfe_obj=rfe_obj, ml_obj=ml_obj, behav_name=behav_name)
 
-            self.production_models_[behav_name] = {
-                'score': score,
-                'rfe': fs_obj[selected_rfe],
-                'ml': trained_obj,
-            }
+            self.production_models_[behav_name]['score'] = score
+            self.production_models_[behav_name]['ml'] = trained_obj
+            self.production_models_[behav_name]['rfe'] = fs_obj[selected_rfe]
+
 
         if len(self.cross_platform_failures_) > 0:
             print(f'fldrs that require cross platform fixation: {self.cross_platform_failures_}')
@@ -177,11 +176,11 @@ class ProductionModelCreator:
             rfe_obj=rfe_obj,
             ml_obj=selected_ml,
             behav_name=behav_name)
-            self.production_models_[behav_name] = {
-                'score': score,
-                'rfe': rfe_obj,
-                'ml': trained_obj,
-            }
+
+            self.production_models_[behav_name]['score'] = score
+            self.production_models_[behav_name]['ml'] = trained_obj
+            self.production_models_[behav_name]['rfe'] = rfe_obj
+
 
 if __name__ == '__main__':
     pmc = ProductionModelCreator('../tobedeletedmodelsfolder/')

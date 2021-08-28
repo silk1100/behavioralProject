@@ -160,9 +160,10 @@ class DataDivisor:
 
     def _validate_severity_level(self,
                                  severity_level:str) -> bool:
-        if severity_level in constants.SEVERITY_LEVEL_AVAILABLE:
-            return True
-        return False
+        for severity in severity_level:
+            if severity not in constants.SEVERITY_LEVEL_AVAILABLE:
+                return False
+        return True
 
     def get_group(self, srs_test_type:str, severity_level:str,
                   age_group:tuple=None, gender:str=None)->pd.DataFrame:
@@ -179,16 +180,22 @@ class DataDivisor:
 
         df = pd.read_csv(file_path, index_col='subj_id')
         self._df_selected_groups_ = df
-        group_df = df[df[f'categories_{correct_srs_test_type.split("_")[1]}'] == severity_level]
-        if age_group is not None:
-            group_df = group_df[age_group[0]<=group_df['AGE_AT_SCAN']<=age_group[1]]
-        if gender is not None:
-            if gender in 'male' or gender.lower() == 'm' or gender == 1:
-                group_df = group_df[group_df['SEX']==1]
-            elif gender in 'female' or gender.lower() == 'f' or gender == 2:
-                group_df = group_df[group_df['SEX'] == 2]
+        group_df = pd.DataFrame(columns=df.columns)
+        for severity_group in severity_level:
+            group = df[df[f'categories_{correct_srs_test_type.split("_")[1]}'] == severity_group]
+            if age_group is not None:
+                group = group[age_group[0]<=group['AGE_AT_SCAN']<=age_group[1]]
+            if gender is not None:
+                if gender in 'male' or gender.lower() == 'm' or gender == 1:
+                    group = group[group['SEX']==1]
+                elif gender in 'female' or gender.lower() == 'f' or gender == 2:
+                    group = group[group['SEX'] == 2]
+                else:
+                    raise ValueError(f'Gender can be either (male/m/1) or (female/f/2)')
+            if len(group_df)==0:
+                group_df = group
             else:
-                raise ValueError(f'Gender can be either (male/m/1) or (female/f/2)')
+                group_df = pd.concat([group_df, group], axis=0)
 
         return group_df
 
