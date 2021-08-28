@@ -142,24 +142,25 @@ class Experiment:
 
         def remove_subjects2balance(removed_group, converted_col_name, ASD_count, TD_count):
             if removed_group == 'ASD':
-                df_asd = df[df_all['DX_GROUP']==1]
+                df_asd = df_group[df_group['mylabels']==1]
                 df_toberemoved = df_asd.sample(n=ASD_count - TD_count, random_state=1234)
-                updated_df = df_all.drop(df_toberemoved.index, axis=0)
+                updated_df = df_group.drop(df_toberemoved.index, axis=0)
             elif removed_group == 'TD':
-                df_asd = df[df_all['DX_GROUP']==2]
+                df_asd = df_group[df_group['mylabels']==2]
                 df_toberemoved = df_asd.sample(n= TD_count - ASD_count, random_state=1234)
-                updated_df = df_all.drop(df_toberemoved.index, axis=0)
+                updated_df = df_group.drop(df_toberemoved.index, axis=0)
             else:
                 raise TypeError("Group should be either ASD or TD")
             return updated_df
 
-
+        category_col = [col for col in df_group.columns if col.startswith('categories_')][0].split('_')[1]
+        converted_col_name = f"SRS_{category_col}_T"
         try:
-            ASD_count = df_group['DX_GROUP'].value_counts()[1]
+            ASD_count = df_group['mylabels'].value_counts()[1]
         except Exception:
             ASD_count = 0
         try:
-            TD_count = df_group['DX_GROUP'].value_counts()[2]
+            TD_count = df_group['mylabels'].value_counts()[2]
         except Exception:
             TD_count = 0
         more_ASd = True
@@ -169,8 +170,6 @@ class Experiment:
             ratio = ASD_count/(TD_count+ASD_count)
             more_ASd = False
 
-        category_col = [col for col in df_group.columns if col.startswith('categories_')][0].split('_')[1]
-        converted_col_name = f"SRS_{category_col}_T"
         if ratio < 0.4:
             if more_ASd:
                 if TD_count < 50:
@@ -191,7 +190,7 @@ class Experiment:
         else:
             df = df_group
 
-        df['my_labels'] = df[converted_col_name].apply(lambda x: 2 if x<=59 else 1)
+        df['mylabels'] = df[converted_col_name].apply(lambda x: 2 if x<=59 else 1)
         return df
 
     def _plot_distr(self, df):
@@ -443,7 +442,7 @@ class Experiment:
                 srs_col = group_df.pop(srs_col_name)
                 srs_cat_col = group_df.pop(f'categories_{srs_col_name.split("_")[1]}')
                 final_diag = group_df.pop('DX_GROUP')
-                group_df.rename(columns={'my_labels':'DX_GROUP'}, inplace=True)
+                group_df.rename(columns={'mylabels':'DX_GROUP'}, inplace=True)
         else:
             data_repr_available = False
             for key, repr_list in constants.DATA_REPR_MAP.items():
@@ -473,8 +472,8 @@ class Experiment:
             self.FS_grid_scores_ = self._FS_obj.scores_
 
             if normalizer is not None:
-
                 utils.save_model(os.path.join(self.stampfldr_, 'normalizer.p'), normalizer)
+
             utils.save_model(os.path.join(self.stampfldr_, "FS_obj"), self._FS_obj.rfe_)
 
             self._save_selected_feats_json(self.FS_selected_feats_)

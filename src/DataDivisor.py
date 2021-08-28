@@ -159,13 +159,13 @@ class DataDivisor:
         return file_path, correct_srs_test_type
 
     def _validate_severity_level(self,
-                                 severity_level:str) -> bool:
+                                 severity_level:tuple) -> bool:
         for severity in severity_level:
             if severity not in constants.SEVERITY_LEVEL_AVAILABLE:
                 return False
         return True
 
-    def get_group(self, srs_test_type:str, severity_level:str,
+    def get_group(self, srs_test_type:str, severity_level:tuple,
                   age_group:tuple=None, gender:str=None)->pd.DataFrame:
         try:
             file_path, correct_srs_test_type = self._validity_srs_test_type(srs_test_type)
@@ -177,6 +177,19 @@ class DataDivisor:
 
         if not self._validate_severity_level(severity_level):
             raise ValueError(f'severity level should be one of the following: {constants.SEVERITY_LEVEL_AVAILABLE}')
+
+        idx0 = constants.SEVERITY_LEVEL_AVAILABLE.index(severity_level[0])
+        idx1 = constants.SEVERITY_LEVEL_AVAILABLE.index(severity_level[1])
+        if idx0 == idx1:
+            raise ValueError("Cant run algorithm to classify same labels")
+
+        idx_label = {}
+        if idx0 < idx1:
+            idx_label[severity_level[0]] = 2
+            idx_label[severity_level[1]] = 1
+        else:
+            idx_label[severity_level[0]] = 1
+            idx_label[severity_level[1]] = 2
 
         df = pd.read_csv(file_path, index_col='subj_id')
         self._df_selected_groups_ = df
@@ -196,6 +209,9 @@ class DataDivisor:
                 group_df = group
             else:
                 group_df = pd.concat([group_df, group], axis=0)
+
+        group_df['mylabels'] = group_df[f'categories_{correct_srs_test_type.split("_")[1]}'].\
+            apply(lambda x: idx_label[x])
 
         return group_df
 
