@@ -202,6 +202,18 @@ DATA_DIV_DIR = {
     'SRS_MANNERISMS_T': '../data/data_divisor/srs_manner',
 }
 
+# csv files with fewer number of subjects for testing the pipeline
+# Change it in DataDivisor._validity_srs_test_type method
+DATA_DIV_DIR_TESTING = {
+    'SRS_TOTAL_T': '../data/data_divisor_test/srs_total',
+    'SRS_AWARENESS_T': '../data/data_divisor_test/srs_awar',
+    'SRS_COGNITION_T': '../data/data_divisor_test/srs_cog',
+    'SRS_COMMUNICATION_T': '../data/data_divisor_test/srs_comm',
+    'SRS_MOTIVATION_T': '../data/data_divisor_test/srs_mot',
+    'SRS_MANNERISMS_T': '../data/data_divisor_test/srs_manner',
+}
+
+
 SRS_TEST_T = list(DATA_DIV_DIR.keys())
 
 SRS_TEST_NAMES_MAP = {
