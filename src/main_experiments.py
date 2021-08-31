@@ -425,6 +425,8 @@ class Experiment:
 
         if self._DD_obj is not None:
             group_df = self._DD_obj.run()
+            group_df = group_df.sample(frac=1, random_state=132)
+
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_beforeFixation.csv'))
             group_df.dropna(inplace=True)
             if exp_params['DD']['srs_type'] is not None:
@@ -455,8 +457,6 @@ class Experiment:
             group_df = pd.read_csv(constants.DATA_DIR[self.data_repr], index_col = 0)
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_beforeFixation.csv'))
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
-
-        group_df = group_df.sample(frac=1, random_state=132)
 
         self._plot_distr(group_df)
 

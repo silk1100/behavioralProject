@@ -55,9 +55,9 @@
 ** main_experiments.py/DataDivisor.py
 	* BUG TYPE: Coding-Technical-Implementation-logic
 	1. group_df_beforeFixation.csv always return only the severity level as chosen in experiment_designer.py exp_params['DD']['severity_group'] and it doesnt return any other
-	groups such as TD. Therefore, there will always be group_df_afterFixation.csv regardless. (SOLVED)
+	groups such as TD. Therefore, there will always be group_df_afterFixation.csv regardless.
 	2. _create_pseudocode_scores() -> create an unfitted version of the classifier and repeat the train_test_split to have more confident results. (SOLVED)
-	3. Xselected.p has a problem as it gives different results than when features are extracted from data using FSobj.
+	3. Xselected.p has a problem as it gives different results than when features are extracted from data using FSobj. (SOLVED BUT REQUIRE TESTING TO MAKE SURE)
 	
 	
 	

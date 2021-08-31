@@ -114,14 +114,16 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         if self.rfe_ is None:
             raise ValueError("You need to call fit method first")
         if isinstance(self.rfe_, dict):
-            if self.normalizer is None:
-                return {name: rfe.transform(X) for name, rfe in self.rfe_.items()}
-            else:
-                return {name: rfe.transform(self.normalizer.transform(X)) for name, rfe in self.rfe_.items()}
+            return {name: rfe.transform(X) for name, rfe in self.rfe_.items()}
+            # if self.normalizer is None:
+            #     return {name: rfe.transform(X) for name, rfe in self.rfe_.items()}
+            # else:
+            #     return {name: rfe.transform(self.normalizer.transform(X)) for name, rfe in self.rfe_.items()}
         if self.normalizer is None:
             return self.rfe_.transform(X)
-        else:
-            return self.rfe_.transform(self.normalizer.transform(X))
+        #     return self.rfe_.transform(X)
+        # else:
+        #     return self.rfe_.transform(self.normalizer.transform(X))
 
     def fit_transform(self, X, y=None, **fit_params):
         data_dict = {**self.default_rfecv, **fit_params} if fit_params is not None else self.default_rfecv
@@ -196,5 +198,3 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
         else:
             self.selected_feats_ = self.all_feats_[self.get_support()]
         return self.transform(X), y, self.normalizer
-
-
