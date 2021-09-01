@@ -29,7 +29,7 @@ from sklearn.base import clone
 
 class Experiment:
     def __init__(self, **experiment_params):
-        self._expr_params = None
+        self._expr_params = experiment_params
         self.stampfldr_ = None
 
         # Type of data to use
@@ -70,6 +70,9 @@ class Experiment:
         if len(experiment_params)> 1:
             self._parse_exp_params(experiment_params)
             self._expr_params = experiment_params
+        else:
+            self._parse_exp_params(exp_params)
+            self._expr_params = exp_params
 
     def _parse_exp_params(self, exp_params_dict):
         for key, item in exp_params_dict.items():
@@ -218,9 +221,9 @@ class Experiment:
         plt.xlabel('Age')
         # plt.xticks([])
         plt.ylabel('PDF')
-        if exp_params["DD"]["srs_type"] is not None:
-            plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[exp_params["DD"]["srs_type"]]} with ASD as'
-                  f' {exp_params["DD"]["severity_group"]}')
+        if self._expr_params ["DD"]["srs_type"] is not None:
+            plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[self._expr_params ["DD"]["srs_type"]]} with ASD as'
+                  f' {self._expr_params ["DD"]["severity_group"]}')
         else:
             plt.title(f'Age distribution of all of the'
                       f' data')
@@ -239,7 +242,7 @@ class Experiment:
                 plt.plot(np.arange(1, len(grid)+1), grid)
                 plt.xlabel('# of features')
                 plt.ylabel('Scores')
-                plt.title(f'{exp_params["FS"]["scoring"] if isinstance(exp_params["FS"]["scoring"], str) else "Score"} vs.'
+                plt.title(f'{self._expr_params ["FS"]["scoring"] if isinstance(self._expr_params ["FS"]["scoring"], str) else "Score"} vs.'
                           f'number of features')
                 plt.savefig(f'{os.path.join(self.stampfldr_, f"FS_{key}.png")}', bbox_inches='tight')
         else:
@@ -247,7 +250,7 @@ class Experiment:
             plt.plot(np.arange(1, len(grid)), grid)
             plt.xlabel('# of features')
             plt.ylabel('Scores')
-            plt.title(f'{exp_params["FS"]["scoring"] if isinstance(exp_params["FS"]["scoring"]) else "Score"} vs.'
+            plt.title(f'{self._expr_params ["FS"]["scoring"] if isinstance(self._expr_params ["FS"]["scoring"]) else "Score"} vs.'
                       f'number of features')
             plt.savefig(f'{os.path.join(self.stampfldr_, "FS.png")}', bbox_inches='tight')
 
@@ -306,10 +309,10 @@ class Experiment:
     def _save_ML_scores(self, Xselected, ml_obj):
         results_dict = defaultdict(dict)
         if isinstance(Xselected, np.ndarray):
-            if exp_params.get('FS') is None:
+            if self._expr_params .get('FS') is None:
                 new_Xselected = {'None':Xselected}
             else:
-                est = exp_params.get('FS').get('est')
+                est = self._expr_params .get('FS').get('est')
                 if isinstance(est, str):
                     new_Xselected = {est: Xselected}
                 else:
@@ -336,7 +339,7 @@ class Experiment:
                 dict2save = {key: item.tolist() for key, item in selected_feats.items()}
                 json.dump(dict2save, f)
             else:
-                dict2save = {exp_params['FS']['est']: selected_feats.tolist() if isinstance(selected_feats, np.ndarray)
+                dict2save = {self._expr_params ['FS']['est']: selected_feats.tolist() if isinstance(selected_feats, np.ndarray)
                 else selected_feats}
                 json.dump(dict2save, f)
 
@@ -401,10 +404,12 @@ class Experiment:
         self.stampfldr_ = os.path.join(constants.MODELS_DIR['main'], stamp)
         os.mkdir(self.stampfldr_)
 
-        utils.save_experiment_params(self.stampfldr_, exp_params)
-
         if self._expr_params is None:
             self._check_and_fill_expr_params( )
+
+        utils.save_experiment_params(self.stampfldr_, self._expr_params )
+
+
 
         if 'DD' in self._expr_params:
             if 'median' not in self.data_repr:
@@ -429,8 +434,8 @@ class Experiment:
 
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_beforeFixation.csv'))
             group_df.dropna(inplace=True)
-            if exp_params['DD']['srs_type'] is not None:
-                category = constants.SRS_TEST_NAMES_MAP[exp_params['DD']['srs_type']]
+            if self._expr_params ['DD']['srs_type'] is not None:
+                category = constants.SRS_TEST_NAMES_MAP[self._expr_params ['DD']['srs_type']]
                 group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
             else:
                 category = None
@@ -517,7 +522,7 @@ class Experiment:
         # for key, fs in fs_obj.items():
         #     Xselected[key] = Xs[:, np.where(fs.support_)[0]]
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est=list(Xselected.keys()) if isinstance(Xselected, dict)
-                                                                                    else exp_params['FS']['est'])
+                                                                                    else self._expr_params ['FS']['est'])
         utils.save_model(os.path.join(self.stampfldr_, "ML_obj"), self._ML_obj.grid)
 
         self._save_ML_scores(Xselected, self.ML_grid_)

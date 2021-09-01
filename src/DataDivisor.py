@@ -197,7 +197,7 @@ class DataDivisor:
         for severity_group in severity_level:
             group = df[df[f'categories_{correct_srs_test_type.split("_")[1]}'] == severity_group]
             if age_group is not None:
-                group = group[age_group[0]<=group['AGE_AT_SCAN']<=age_group[1]]
+                group = group[(age_group[0]<=group['AGE_AT_SCAN '])&(group['AGE_AT_SCAN ']<=age_group[1])]
             if gender is not None:
                 if gender in 'male' or gender.lower() == 'm' or gender == 1:
                     group = group[group['SEX']==1]

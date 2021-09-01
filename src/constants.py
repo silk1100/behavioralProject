@@ -59,6 +59,7 @@ MODELS_DIR = {
     'production': '../selected_models_for_production'
 }
 
+OUTPUT_DIR = "../output"
 
 MAX_ITR = int(1e9)
 
@@ -202,8 +203,13 @@ DATA_DIV_DIR = {
     'SRS_MANNERISMS_T': '../data/data_divisor/srs_manner',
 }
 
-# csv files with fewer number of subjects for testing the pipeline
-# Change it in DataDivisor._validity_srs_test_type method
+"""
+csv files with fewer number of subjects for testing the pipeline. Change it in DataDivisor._validity_srs_test_type()
+The main folder "../data/data_divisor_test/" is created manually but all the subdirectories and files are created via
+"../notebooks/create_data_divisor_test.ipynb".
+median csv files are created when you set the "percentile = False" in the second cell
+percentile csv files are created when you set the "percentile = True" in the second cell
+"""
 DATA_DIV_DIR_TESTING = {
     'SRS_TOTAL_T': '../data/data_divisor_test/srs_total',
     'SRS_AWARENESS_T': '../data/data_divisor_test/srs_awar',
