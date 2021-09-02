@@ -60,6 +60,7 @@ class Experiment:
         self._FS_obj = FeatureSelection.FeatureSelector()
         self.FS_selected_feats_ = None
         self.FS_grid_scores_ = None
+
         # Classifier Params
         self.ML_est = None
         self.ML_cv = None
@@ -81,7 +82,7 @@ class Experiment:
 
     def _parse_exp_params(self, exp_params_dict):
         for key, item in exp_params_dict.items():
-            if key in ['DD', 'FS', 'ML']:
+            if key in ['DD', 'FS', 'ML','FE']:
                 data_dict = item
                 self._validate_params(data_dict, key)
                 for skey, sval in data_dict.items():
@@ -353,16 +354,13 @@ class Experiment:
             self.ML_obj = None
 
         if self._DD_obj is not None:
-            group_df = self._DD_obj.run()
+            if self.DD_balance:
+                group_df_before, group_df = self._DD_obj.run()
+                group_df_before.to_csv(os.path.join(self.stampfldr_, 'group_df_beforeFixation.csv'))
+            else:
+                group_df = self._DD_obj.run()
             group_df = group_df.sample(frac=1, random_state=132)
 
-            group_df.to_csv(os.path.join(self.stampfldr_,'group_df_beforeFixation.csv'))
-            group_df.dropna(inplace=True)
-            if self._expr_params ['DD']['srs_type'] is not None:
-                category = constants.SRS_TEST_NAMES_MAP[self._expr_params ['DD']['srs_type']]
-                group_df = self._check_and_fix_unbalance_groups(self._DD_obj._df_selected_groups_, group_df, category)
-            else:
-                category = None
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
             if len(group_df.index) != group_df.index.nunique():
                 warnings.warn("There are duplicate subjects in the data after fixation")

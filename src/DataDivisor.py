@@ -167,7 +167,7 @@ class DataDivisor:
         return True
 
     def get_group(self, srs_test_type:str, severity_level:tuple,
-                  age_group:tuple=None, gender:str=None)->pd.DataFrame:
+                  age_group:tuple=None, gender:str=None):
         try:
             file_path, correct_srs_test_type = self._validity_srs_test_type(srs_test_type)
         except Exception:
@@ -217,9 +217,12 @@ class DataDivisor:
             apply(lambda x: idx_label[x])
 
         group_df.dropna(inplace=True)
+        
         if self.balance:
+            before_fixing = group_df.copy()
             group_df = self._check_and_fix_unbalance_groups(df if not age_group else df_ageLimited, group_df, idx_label )
-
+            return before_fixing, group_df
+        
         return group_df
 
     def set_params(self, **params) -> None:
@@ -228,7 +231,6 @@ class DataDivisor:
                 setattr(self, key, val)
             else:
                 raise KeyError(f'{key} is not a valid parameter')
-
 
     def _check_and_fix_unbalance_groups(self, df_all:pd.DataFrame, df_group:pd.DataFrame, idx_label:dict,)->pd.DataFrame:
         def add_subjects2balance(df_all, df_group, added_group, converted_col_name, ASD_count, TD_count):
@@ -252,8 +254,8 @@ class DataDivisor:
                 else:
                     df_added = df_target1.sample(n_samples, random_state=1)
 
-                df_added = df_added[df_group.columns]
                 df_added['mylabels'] = 2
+                df_added = df_added[df_group.columns]
                 df_group = pd.concat([df_group, df_added], axis=0)
             elif idx_label[added_group] == 1:
                 # Sample from ASD
@@ -281,7 +283,7 @@ class DataDivisor:
                 raise TypeError("Group should be either ASD or TD")
             return df_group
 
-        def remove_subjects2balance(removed_group, ASD_count, TD_count):
+        def remove_subjects2balance(df_group, removed_group, ASD_count, TD_count):
             if removed_group == 'ASD':
                 df_asd = df_group[df_group['mylabels']==1]
                 df_toberemoved = df_asd.sample(n=ASD_count - TD_count, random_state=1234)
@@ -331,9 +333,11 @@ class DataDivisor:
                     except Exception:
                         TD_count = 0
                     if TD_count*1.0/(ASD_count+TD_count) < 0.4:
-                        df = remove_subjects2balance("ASD", ASD_count, TD_count)
+                        df = remove_subjects2balance(df_group, "ASD", ASD_count, TD_count)
+                    else:
+                        df = df_group
                 else:
-                    df = remove_subjects2balance("ASD", ASD_count, TD_count)
+                    df = remove_subjects2balance(df_group, "ASD", ASD_count, TD_count)
             else:
                 cat_group = get_key_corresponding_to_val(idx_label, 1)
                 # Sample from ASD
@@ -348,9 +352,11 @@ class DataDivisor:
                     except Exception:
                         TD_count = 0
                     if ASD_count*1.0/(ASD_count+TD_count) < 0.4:
-                        df = remove_subjects2balance("TD", ASD_count, TD_count)
+                        df = remove_subjects2balance(df_group, "TD", ASD_count, TD_count)
+                    else:
+                        df = df_group
                 else:
-                    df = remove_subjects2balance("TD", ASD_count, TD_count)
+                    df = remove_subjects2balance(df_group, "TD", ASD_count, TD_count)
 
         else:
             df = df_group
