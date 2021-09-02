@@ -125,9 +125,9 @@ class DataDivisor:
         for srs_test in constants.SRS_TEST_T:
             df = updated_df.loc[:, self.df.columns.tolist()+[srs_test]]
             df[f'categories_{srs_test.split("_")[1]}'] = df[srs_test].apply(divisor)
-            if not os.path.isdir(constants.DATA_DIV_DIR_TESTING[srs_test]):
-                os.mkdir(constants.DATA_DIV_DIR_TESTING[srs_test])
-            df.to_csv(os.path.join(constants.DATA_DIV_DIR_TESTING[srs_test],f'{self.data_repr}_{srs_test}.csv'),
+            if not os.path.isdir(constants.DATA_DIV_DIR[srs_test]):
+                os.mkdir(constants.DATA_DIV_DIR[srs_test])
+            df.to_csv(os.path.join(constants.DATA_DIV_DIR[srs_test],f'{self.data_repr}_{srs_test}.csv'),
                                    index_label='subj_id')
 
     def _validity_srs_test_type(self,
@@ -136,12 +136,12 @@ class DataDivisor:
             return None, None
         file_path = None
         correct_srs_test_type = srs_test_type
-        if srs_test_type in constants.DATA_DIV_DIR_TESTING:
-                file_path = os.path.join(constants.DATA_DIV_DIR_TESTING[srs_test_type],
+        if srs_test_type in constants.DATA_DIV_DIR:
+                file_path = os.path.join(constants.DATA_DIV_DIR[srs_test_type],
                                          f'{self.data_repr}_{srs_test_type}.csv')
         elif srs_test_type in constants.SRS_TEST_NAMES_MAP:
             file_path = os.path.join(
-                constants.DATA_DIV_DIR_TESTING[constants.SRS_TEST_NAMES_MAP[srs_test_type]],
+                constants.DATA_DIV_DIR[constants.SRS_TEST_NAMES_MAP[srs_test_type]],
                 f'{self.data_repr}_{constants.SRS_TEST_NAMES_MAP[srs_test_type]}.csv')
             correct_srs_test_type = constants.SRS_TEST_NAMES_MAP[srs_test_type]
         else:
@@ -149,12 +149,12 @@ class DataDivisor:
                 if srs_test_type in srs_t:
                     correct_srs_test_type = constants.SRS_TEST_NAMES_MAP[srs_test_type]
                     file_path = os.path.join(
-                        constants.DATA_DIV_DIR_TESTING[correct_srs_test_type],
+                        constants.DATA_DIV_DIR[correct_srs_test_type],
                         f'{self.data_repr}_{correct_srs_test_type}.csv')
                     break
 
         if file_path is None:
-            raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR_TESTING.keys())}')
+            raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR.keys())}')
 
         return file_path, correct_srs_test_type
 
@@ -170,7 +170,7 @@ class DataDivisor:
         try:
             file_path, correct_srs_test_type = self._validity_srs_test_type(srs_test_type)
         except Exception:
-            raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR_TESTING.keys())}')
+            raise ValueError(f'srs_test_type should be one of the following {list(constants.DATA_DIV_DIR.keys())}')
 
         if srs_test_type is None:
             return self.df

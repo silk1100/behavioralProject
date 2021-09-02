@@ -7,3 +7,4 @@ src/experiment_designer.py
 src/.p
 selected_models_for_production/
 *.pyc
+output/

@@ -28,8 +28,14 @@ class ExperimentBuilder:
             else:
                 self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('/')[-1])
             self._validate_create_output_path(self.output_path)
-            self.output_subpaths = [os.path.join(self.output_path, x) for x in os.listdir(self.input_path)
-                                    if x.endswith('.json')]
+            if os.name == 'nt':
+                self.output_subpaths = [os.path.join(self.output_path, x.split('\\')[-1].split('.')[0])
+                                        for x in os.listdir(self.input_path) if x.endswith('.json')]
+            else:
+                self.output_subpaths = [os.path.join(self.output_path, x.split('/')[-1].split('.')[0])
+                                        for x in os.listdir(self.input_path) if x.endswith('.json')]
+
+            print(self.output_subpaths)
             _ = [self._validate_create_output_path(path) for path in self.output_subpaths]
         self.experiment_dict = self._read_experiments(self.input_exp) if self.singleExp else \
             self._read_experiments(self.input_path)
@@ -172,9 +178,9 @@ if __name__ == "__main__":
     else:
         raise ValueError("You need to pass a valid output directory that exists or can be created after"
                          "-o <dir> or --output <dir>")
-
-    print(input_dir)
-    print(output_dir)
+    #
+    # print(input_dir)
+    # print(output_dir)
     exp = ExperimentBuilder(input_dir)
     experiments = exp.get_experiment()
     for key, experiment in experiments.items():
