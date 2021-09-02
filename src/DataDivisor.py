@@ -137,8 +137,8 @@ class DataDivisor:
         file_path = None
         correct_srs_test_type = srs_test_type
         if srs_test_type in constants.DATA_DIV_DIR_TESTING:
-            file_path = os.path.join(constants.DATA_DIV_DIR_TESTING[srs_test_type], f'{self.data_repr}_{srs_test_type}.csv')
-
+                file_path = os.path.join(constants.DATA_DIV_DIR_TESTING[srs_test_type],
+                                         f'{self.data_repr}_{srs_test_type}.csv')
         elif srs_test_type in constants.SRS_TEST_NAMES_MAP:
             file_path = os.path.join(
                 constants.DATA_DIV_DIR_TESTING[constants.SRS_TEST_NAMES_MAP[srs_test_type]],

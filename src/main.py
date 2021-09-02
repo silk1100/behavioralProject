@@ -5,7 +5,7 @@ import json
 
 
 class ExperimentBuilder:
-    def __init__(self, exp_input:str):
+    def __init__(self, exp_input):
         if os.path.isdir(exp_input) and self._validate_input_path(exp_input):
             self.input_path = exp_input
             self.singleExp = False
@@ -17,17 +17,22 @@ class ExperimentBuilder:
                              "to a single experiment json file")
 
         if self.singleExp:
-            self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_exp.split('\\')[-1].split('.')[0])
+            if os.name == 'nt':
+                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_exp.split('\\')[-1].split('.')[0])
+            else:
+                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_exp.split('/')[-1].split('.')[0])
             self._validate_create_output_path(self.output_path)
         else:
-            self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('\\')[-1])
+            if os.name == 'nt':
+                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('\\')[-1])
+            else:
+                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('/')[-1])
             self._validate_create_output_path(self.output_path)
             self.output_subpaths = [os.path.join(self.output_path, x) for x in os.listdir(self.input_path)
                                     if x.endswith('.json')]
-            [self._validate_create_output_path(path) for path in self.output_subpaths]
-
-
-
+            _ = [self._validate_create_output_path(path) for path in self.output_subpaths]
+        self.experiment_dict = self._read_experiments(self.input_exp) if self.singleExp else \
+            self._read_experiments(self.input_path)
 
     def _validate_input_path(self, path):
         if not os.path.isdir(path):
@@ -43,20 +48,33 @@ class ExperimentBuilder:
 
     def _read_experiments(self, exp_path):
         exp_dict = {}
-        if isinstance(exp_path, list):
-            for exp_json in exp_path:
-                with open(exp_json, 'r') as f:
+        if not self.singleExp:
+            exp_paths = [x for x in os.listdir(exp_path) if x.endswith('.json')]
+            for exp_json in exp_paths:
+                with open(os.path.join(exp_path, exp_json), 'r') as f:
                     exp = json.load(f)
-                exp_dict[exp_json.split('\\')[-1].split('.')[0]] = exp
+                if os.name == 'nt':
+                    exp_dict[exp_json.split('\\')[-1].split('.')[0]] = exp
+                    exp_dict[exp_json.split('\\')[-1].split('.')[0]]['output'] =\
+                        os.path.join(self.output_path,exp_json.split('\\')[-1].split('.')[0])
+
+                else:
+                    exp_dict[exp_json.split('/')[-1].split('.')[0]] = exp
+                    exp_dict[exp_json.split('/')[-1].split('.')[0]]['output'] =\
+                        os.path.join(self.output_path,exp_json.split('/')[-1].split('.')[0])
+
         elif isinstance(exp_path, str):
             with open(exp_path, 'r') as f:
                 exp = json.load(f)
-            exp_dict[exp_path.split('\\')[-1].split('.')[0]] = exp
-            
+            if os.name =='nt':
+                exp_dict[exp_path.split('\\')[-1].split('.')[0]] = exp
+            else:
+                exp_dict[exp_path.split('/')[-1].split('.')[0]] = exp
+
         return exp_dict
 
     def get_experiment(self):
-        pass
+        return self.experiment_dict
 
 experiment_1 = {
         'data_repr': 'median',
@@ -113,11 +131,14 @@ def main(*args, **kwargs):
 
 
 def _validate_input_path(path):
+    if os.path.exists(path) and path.endswith('.json'):
+        return True
     if not os.path.isdir(path):
         return False
     if not [x for x in os.listdir(path) if x.endswith('.json')]:
         return False
     return True
+
 
 def _validate_create_output_path(path):
     if not os.path.isdir(path):
@@ -154,6 +175,12 @@ if __name__ == "__main__":
 
     print(input_dir)
     print(output_dir)
-
+    exp = ExperimentBuilder(input_dir)
+    experiments = exp.get_experiment()
+    for key, experiment in experiments.items():
+        print(f'Running the following Experiment:\n{key}')
+        e = Experiment(**experiment)
+        e.run()
+        print(f'Finsihed running experiment: {key}')
     # exp1 = Experiment(**experiment_1)
     # exp1.run()

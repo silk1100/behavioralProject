@@ -59,7 +59,16 @@
 	2. _create_pseudocode_scores() -> create an unfitted version of the classifier and repeat the train_test_split to have more confident results. (SOLVED)
 	3. Xselected.p has a problem as it gives different results than when features are extracted from data using FSobj. (SOLVED and tested)
 	
+********************************************************************************************************************************************************************************
+** main_experiments.py/DataDivisor.py
+	* BUG TYPE: Coding-Technical-Implementation-logic
+	1. When the 2 groups are ASD (sever-mild), (sever-moderate), then I get mylabels all 1.
+** naub.py
+	* BUG TYPE: Coding-Technical-Implementation-logic
+	1. When json file is passed as input, the created output folder contains the .json extension
 	
+	
+
 	
 
 

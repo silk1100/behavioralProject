@@ -5,7 +5,7 @@
     "srs_type": "awa",
     "severity_group": ["moderate", "TD"],
     "age_group": null,
-    "divide_data": false
+    "divide_data": true
   },
   "FS": {
     "est": ["lsvm", "rf"],

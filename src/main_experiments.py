@@ -30,7 +30,11 @@ from sklearn.base import clone
 class Experiment:
     def __init__(self, **experiment_params):
         self._expr_params = experiment_params
-        self.stampfldr_ = None
+        if 'output' in experiment_params:
+            self.stampfldr_ = experiment_params['output']
+            del experiment_params['output']
+        else:
+            self.stampfldr_ = None
 
         # Type of data to use
         self.data_repr = None
@@ -400,9 +404,11 @@ class Experiment:
         df.to_csv(os.path.join(self.stampfldr_, "pseudo_metrics.csv"))
 
     def run(self):
-        stamp = utils.get_time_stamp()
-        self.stampfldr_ = os.path.join(constants.MODELS_DIR['main'], stamp)
-        os.mkdir(self.stampfldr_)
+        if self.stampfldr_ is None:
+            stamp = utils.get_time_stamp()
+            self.stampfldr_ = os.path.join(constants.MODELS_DIR['main'], stamp)
+        if not os.path.isdir(self.stampfldr_):
+            os.mkdir(self.stampfldr_)
 
         if self._expr_params is None:
             self._check_and_fill_expr_params( )
