@@ -35,6 +35,7 @@ class DataDivisor:
         self.divide_data=False
         self.behavioral_columns_ = []
         self._df_selected_groups_ = None
+        self.balance = False
 
         self._get_behavioral_columns()
 
@@ -192,12 +193,14 @@ class DataDivisor:
             idx_label[severity_level[1]] = 2
 
         df = pd.read_csv(file_path, index_col='subj_id')
-        self._df_selected_groups_ = df
+        self._df_selected_groups_ = df.copy()
         group_df = pd.DataFrame(columns=df.columns)
         for severity_group in severity_level:
             group = df[df[f'categories_{correct_srs_test_type.split("_")[1]}'] == severity_group]
             if age_group is not None:
                 group = group[(age_group[0]<=group['AGE_AT_SCAN '])&(group['AGE_AT_SCAN ']<=age_group[1])]
+                # Should I limit the age group over the whole data?? !
+                df_ageLimited = df[(age_group[0]<=df['AGE_AT_SCAN '])&(df['AGE_AT_SCAN ']<=age_group[1])]
             if gender is not None:
                 if gender in 'male' or gender.lower() == 'm' or gender == 1:
                     group = group[group['SEX']==1]
@@ -213,6 +216,10 @@ class DataDivisor:
         group_df['mylabels'] = group_df[f'categories_{correct_srs_test_type.split("_")[1]}'].\
             apply(lambda x: idx_label[x])
 
+        group_df.dropna(inplace=True)
+        if self.balance:
+            group_df = self._check_and_fix_unbalance_groups(df if not age_group else df_ageLimited, group_df, idx_label )
+
         return group_df
 
     def set_params(self, **params) -> None:
@@ -221,6 +228,135 @@ class DataDivisor:
                 setattr(self, key, val)
             else:
                 raise KeyError(f'{key} is not a valid parameter')
+
+
+    def _check_and_fix_unbalance_groups(self, df_all:pd.DataFrame, df_group:pd.DataFrame, idx_label:dict,)->pd.DataFrame:
+        def add_subjects2balance(df_all, df_group, added_group, converted_col_name, ASD_count, TD_count):
+            if idx_label[added_group] == 2:
+                severity_idx = constants.SEVERITY_LEVEL_AVAILABLE.index(added_group)
+                if severity_idx == 0:
+                    df_td_G = df_all[df_all['DX_GROUP'] == 2]  # _G stands for group
+                else:
+                    df_td_G = df_all[df_all[converted_col_name] == constants.SEVERITY_LEVEL_AVAILABLE[severity_idx-1]]  # _G stands for group
+
+                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
+                upper_bound = age_mean + age_std
+                lower_bound = age_mean - age_std
+                # df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
+                df_target1 = df_td_G.loc[
+                             (df_td_G['AGE_AT_SCAN '] >= lower_bound) & (df_td_G['AGE_AT_SCAN '] <= upper_bound), :]
+                n_samples = constants.DD_MIN_N_PER_CLASS if len(df_td_G)>constants.DD_MIN_N_PER_CLASS else len(df_td_G)
+                group_diff = ASD_count-TD_count
+                if group_diff < n_samples:
+                    df_added = df_target1.sample(group_diff, random_state=1)
+                else:
+                    df_added = df_target1.sample(n_samples, random_state=1)
+
+                df_added = df_added[df_group.columns]
+                df_added['mylabels'] = 2
+                df_group = pd.concat([df_group, df_added], axis=0)
+            elif idx_label[added_group] == 1:
+                # Sample from ASD
+                severity_idx = constants.SEVERITY_LEVEL_AVAILABLE.index(added_group)
+                if severity_idx == len(constants.SEVERITY_LEVEL_AVAILABLE)-1:
+                    df_asd = df_all[df_all['DX_GROUP'] == 1]  # _G stands for group
+                else:
+                    df_asd = df_all[df_all[converted_col_name] == constants.SEVERITY_LEVEL_AVAILABLE[severity_idx+1]]
+                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
+                upper_bound = age_mean + age_std
+                lower_bound = age_mean - age_std
+                df_target = df_asd.loc[
+                            (df_asd['AGE_AT_SCAN '] >= lower_bound) & (df_asd['AGE_AT_SCAN '] <= upper_bound), :]
+                n_samples = constants.DD_MIN_N_PER_CLASS if len(df_asd)>constants.DD_MIN_N_PER_CLASS else len(df_asd)
+                group_diff = TD_count-ASD_count
+                if group_diff < n_samples:
+                    df_added = df_target.sample(group_diff, random_state=1)
+                else:
+                    df_added = df_target.sample(n_samples, random_state=1)
+
+                df_added = df_added[df_group.columns]
+                df_added['mylabels'] = 1
+                df_group = pd.concat([df_group, df_added], axis=0)
+            else:
+                raise TypeError("Group should be either ASD or TD")
+            return df_group
+
+        def remove_subjects2balance(removed_group, ASD_count, TD_count):
+            if removed_group == 'ASD':
+                df_asd = df_group[df_group['mylabels']==1]
+                df_toberemoved = df_asd.sample(n=ASD_count - TD_count, random_state=1234)
+                updated_df = df_group.drop(df_toberemoved.index, axis=0)
+            elif removed_group == 'TD':
+                df_asd = df_group[df_group['mylabels']==2]
+                df_toberemoved = df_asd.sample(n= TD_count - ASD_count, random_state=1234)
+                updated_df = df_group.drop(df_toberemoved.index, axis=0)
+            else:
+                raise TypeError("Group should be either ASD or TD")
+            return updated_df
+
+        def get_key_corresponding_to_val(dict2search, value):
+            for k, v in dict2search.items():
+                if v == value:
+                    return k
+            return None
+
+        category_col = [col for col in df_group.columns if col.startswith('categories_')][0].split('_')[1]
+        converted_col_name = f"categories_{category_col}"
+        try:
+            ASD_count = df_group['mylabels'].value_counts()[1]
+        except Exception:
+            ASD_count = 0
+        try:
+            TD_count = df_group['mylabels'].value_counts()[2]
+        except Exception:
+            TD_count = 0
+        more_ASd = True
+        if ASD_count > TD_count:
+            ratio = TD_count/(ASD_count+TD_count)
+        else:
+            ratio = ASD_count/(TD_count+ASD_count)
+            more_ASd = False
+
+        if ratio < 0.4:
+            if more_ASd:
+                cat_group = get_key_corresponding_to_val(idx_label, 2)
+                if TD_count < constants.DD_MIN_N_PER_CLASS:
+                    df_group = add_subjects2balance(df_all, df_group, cat_group, converted_col_name, ASD_count, TD_count)
+                    try:
+                        ASD_count = df_group['mylabels'].value_counts()[1]
+                    except Exception:
+                        ASD_count = 0
+                    try:
+                        TD_count = df_group['mylabels'].value_counts()[2]
+                    except Exception:
+                        TD_count = 0
+                    if TD_count*1.0/(ASD_count+TD_count) < 0.4:
+                        df = remove_subjects2balance("ASD", ASD_count, TD_count)
+                else:
+                    df = remove_subjects2balance("ASD", ASD_count, TD_count)
+            else:
+                cat_group = get_key_corresponding_to_val(idx_label, 1)
+                # Sample from ASD
+                if ASD_count < constants.DD_MIN_N_PER_CLASS:
+                    df_group = add_subjects2balance(df_all, df_group,cat_group, converted_col_name, ASD_count, TD_count)
+                    try:
+                        ASD_count = df_group['mylabels'].value_counts()[1]
+                    except Exception:
+                        ASD_count = 0
+                    try:
+                        TD_count = df_group['mylabels'].value_counts()[2]
+                    except Exception:
+                        TD_count = 0
+                    if ASD_count*1.0/(ASD_count+TD_count) < 0.4:
+                        df = remove_subjects2balance("TD", ASD_count, TD_count)
+                else:
+                    df = remove_subjects2balance("TD", ASD_count, TD_count)
+
+        else:
+            df = df_group
+
+        return df
+
 
     def run(self):
         # self.srs_type=None

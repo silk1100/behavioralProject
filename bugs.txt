@@ -62,10 +62,10 @@
 ********************************************************************************************************************************************************************************
 ** main_experiments.py/DataDivisor.py
 	* BUG TYPE: Coding-Technical-Implementation-logic
-	1. When the 2 groups are ASD (sever-mild), (sever-moderate), then I get mylabels all 1.
+	1. When the 2 groups are ASD (sever-mild), (sever-moderate), then I get mylabels all 1. (A very deep bug related to how I check and fix inbalance in data)(The whole function needs to be refactored)
 ** naub.py
 	* BUG TYPE: Coding-Technical-Implementation-logic
-	1. When json file is passed as input, the created output folder contains the .json extension
+	1. When json file is passed as input, the created output folder contains the .json extension (SOLVED)
 	
 	
 

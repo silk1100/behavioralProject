@@ -46,6 +46,7 @@ class Experiment:
         self.DD_age_group = None
         self.DD_gender = None
         self.DD_divide_data = False
+        self.DD_balance=False
         self._DD_obj = DataDivisor.DataDivisor()
 
         # Featureselection parameters
@@ -116,89 +117,6 @@ class Experiment:
                 self._expr_params[obj_type] = {'_'.join(parts[1:]):item}
             else:
                 self._expr_params[obj_type]['_'.join(parts[1:])] = item
-
-    def _check_and_fix_unbalance_groups(self, df_all:pd.DataFrame, df_group:pd.DataFrame, category: str)->pd.DataFrame:
-        def add_subjects2balance(added_group, converted_col_name, ASD_count, TD_count):
-            if added_group == 'TD':
-                df_td_G = df_all[df_all[converted_col_name] <= 59]  # _G stands for group
-                df_td = df_all[df_all['DX_GROUP'] == 2]
-
-                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
-                upper_bound = age_mean + age_std
-                lower_bound = age_mean - age_std
-                # df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
-                df_target1 = df_td_G.loc[
-                             (df_td_G['AGE_AT_SCAN '] >= lower_bound) & (df_td_G['AGE_AT_SCAN '] <= upper_bound), :]
-                df_target2 = df_td.loc[(df_td['AGE_AT_SCAN '] >= lower_bound) & (df_td['AGE_AT_SCAN '] <= upper_bound), :]
-                df_added = df_target1.sample(n=ASD_count - TD_count, random_state=1234)
-                if (len(df_added) + TD_count) / (len(df_added) + TD_count + ASD_count) < 0.4:
-                    df_added2 = df_target2.sample(n=ASD_count - TD_count - len(df_added), random_state=1)
-                    df_added = pd.concat([df_added, df_added2], axis=0)
-            elif added_group == 'ASD':
-                # Sample from ASD
-                df_asd = df_all[df_all['DX_GROUP'] == 1]
-                age_mean, age_std = df_group['AGE_AT_SCAN '].mean(), df_group['AGE_AT_SCAN '].std()
-                upper_bound = age_mean + age_std
-                lower_bound = age_mean - age_std
-                df_target = df_asd.loc[
-                            (df_asd['AGE_AT_SCAN '] >= lower_bound) & (df_asd['AGE_AT_SCAN '] <= upper_bound), :]
-                df_added = df_target.sample(n=TD_count - ASD_count, random_state=1)
-            else:
-                raise TypeError("Group should be either ASD or TD")
-            return df_added
-
-        def remove_subjects2balance(removed_group, converted_col_name, ASD_count, TD_count):
-            if removed_group == 'ASD':
-                df_asd = df_group[df_group['mylabels']==1]
-                df_toberemoved = df_asd.sample(n=ASD_count - TD_count, random_state=1234)
-                updated_df = df_group.drop(df_toberemoved.index, axis=0)
-            elif removed_group == 'TD':
-                df_asd = df_group[df_group['mylabels']==2]
-                df_toberemoved = df_asd.sample(n= TD_count - ASD_count, random_state=1234)
-                updated_df = df_group.drop(df_toberemoved.index, axis=0)
-            else:
-                raise TypeError("Group should be either ASD or TD")
-            return updated_df
-
-        category_col = [col for col in df_group.columns if col.startswith('categories_')][0].split('_')[1]
-        converted_col_name = f"SRS_{category_col}_T"
-        try:
-            ASD_count = df_group['mylabels'].value_counts()[1]
-        except Exception:
-            ASD_count = 0
-        try:
-            TD_count = df_group['mylabels'].value_counts()[2]
-        except Exception:
-            TD_count = 0
-        more_ASd = True
-        if ASD_count > TD_count:
-            ratio = TD_count/(ASD_count+TD_count)
-        else:
-            ratio = ASD_count/(TD_count+ASD_count)
-            more_ASd = False
-
-        if ratio < 0.4:
-            if more_ASd:
-                if TD_count < 50:
-                    df_added = add_subjects2balance("TD", converted_col_name, ASD_count, TD_count)
-                    df_added = df_added[df_group.columns]
-                    df = pd.concat([df_group, df_added], axis=0)
-                else:
-                    df = remove_subjects2balance("ASD", converted_col_name, ASD_count, TD_count)
-            else:
-                # Sample from ASD
-                if ASD_count < 50:
-                    df_added = add_subjects2balance("ASD", converted_col_name, ASD_count, TD_count)
-                    df_added = df_added[df_group.columns]
-                    df = pd.concat([df_group, df_added], axis=0)
-                else:
-                    df = remove_subjects2balance("TD", converted_col_name, ASD_count, TD_count)
-
-        else:
-            df = df_group
-
-        df['mylabels'] = df[converted_col_name].apply(lambda x: 2 if x<=59 else 1)
-        return df
 
     def _plot_distr(self, df):
         f = plt.figure(num=1, figsize=(16, 10))

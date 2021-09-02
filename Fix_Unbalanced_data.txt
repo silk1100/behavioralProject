@@ -1,0 +1,9 @@
+Problem:
+Assume we are classifying (moderate-mild) in the communication behavioral report. We have 160 moderate and 40 mild. Then how to balance the data.
+
+Proposed Solutions:
+1. Fill the mild with TD communication, up to n (50). Then sample only 50 subjects from moderate. Now you have 2 balanced classes
+2. Fill the mild with as many TD in communication as possible up to 160. Then you have 2 balanced classes (Prone to biasing to TD whenever a mild subject is detected)
+
+Notes:
+Solution #1 is more robust however, we are losing too many subjects. Solution #2 might cause biasing to the data. Which solution would yield a better ML model.

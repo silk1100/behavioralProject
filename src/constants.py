@@ -64,6 +64,7 @@ OUTPUT_DIR = "../output"
 MAX_ITR = int(1e9)
 
 # currying Look it up
+DD_MIN_N_PER_CLASS = 100
 
 CLC_DICT = {
     'lsvm': lambda: LinearSVC(max_iter=MAX_ITR),
