@@ -29,7 +29,7 @@ class ExperimentBuilder:
                 self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('/')[-1])
             self._validate_create_output_path(self.output_path)
             if os.name == 'nt':
-                self.output_subpaths = [os.path.join(self.output_path,x.split('\\')[-2], x.split('\\')[-1].split('.')[0])
+                self.output_subpaths = [os.path.join(self.output_path, x.split('\\')[-1].split('.')[0])
                                         for x in os.listdir(self.input_path) if x.endswith('.json')]
             else:
                 self.output_subpaths = [os.path.join(self.output_path, x.split('/')[-1].split('.')[0])
@@ -48,14 +48,8 @@ class ExperimentBuilder:
         return True
 
     def _validate_create_output_path(self, path):
-        if os.name == 'nt':
-            list_of_dir = path.split('\\')
-        else:
-            list_of_dir = path.split('/')
-        for idx, dir in enumerate(list_of_dir):
-            full_path = os.path.join(list_of_dir[:idx])
-            if not os.path.isdir(full_path):
-                os.mkdir(path)
+        if not os.path.isdir(path):
+            os.mkdir(path)
         return True
 
     def _read_experiments(self, exp_path):
@@ -87,41 +81,6 @@ class ExperimentBuilder:
 
     def get_experiment(self):
         return self.experiment_dict
-
-experiment_1 = {
-        'data_repr': 'median',
-        'normalizer':'minmax',
-        'DD':{
-            'srs_type': 'awa',#'cog',comm
-            'severity_group': ('moderate', 'TD'),
-            'age_group': (6,12),
-            'divide_data': False,
-        },
-        'FS':{
-            'est': ['lsvm','rf'], # Either this or the directory to a model folder with ML_obj.p in it (as below)
-            # 'est': "../models/FS_Hyperparameters_Comm/", # If it is a directory, then Read the classifiers in MLobj
-            'cv': 5,
-            'scoring':'balanced_accuracy',
-            'n_jobs':-1,
-            'verbose': 3,
-            'step':1,
-            'min_features_to_select': 1,
-        },
-        'ML':{
-            'est': ['lr','lsvm'],#['svm','nn','lsvm','xgb'],#['xgb', 'lsvm', 'sgd','svm'],
-            'cv':5,
-            'scoring':'balanced_accuracy',
-            'n_jobs':-1,
-            'verbose':3,
-            'hyper_search_type':'random',
-            #'agg_models': False, #(need to be implemented)
-            'n_iter':50
-        }
-    }
-
-
-def research_question_1():
-    pass
 
 import sys
 def main(*args, **kwargs):

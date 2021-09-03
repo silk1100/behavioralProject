@@ -1,0 +1,6 @@
+batch main_perc.sh --job-name=realjob --time=48:00:00 -cpus-per-task=12 -o ~/temp.txt --begin=0
+
+What is writter inside main.sh
+#!/bin/sh
+python main.py -i ../experiments/Agebetween10t13_severTD_alltests/ -o ../output/Agebetween10t13_severTD_alltests/
+
