@@ -5,7 +5,7 @@ import json
 
 
 class ExperimentBuilder:
-    def __init__(self, exp_input):
+    def __init__(self, exp_input, output_dir=None):
         if os.path.isdir(exp_input) and self._validate_input_path(exp_input):
             self.input_path = exp_input
             self.singleExp = False
@@ -16,17 +16,18 @@ class ExperimentBuilder:
             raise ValueError("exp_input should be a path to directory with json files containing experiments or a path"
                              "to a single experiment json file")
 
+        self.main_output = constants.OUTPUT_DIR if output_dir is not None else output_dir
         if self.singleExp:
             if os.name == 'nt':
-                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_exp.split('\\')[-1].split('.')[0])
+                self.output_path = os.path.join(self.main_output, self.input_exp.split('\\')[-1].split('.')[0])
             else:
-                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_exp.split('/')[-1].split('.')[0])
+                self.output_path = os.path.join(self.main_output, self.input_exp.split('/')[-1].split('.')[0])
             self._validate_create_output_path(self.output_path)
         else:
             if os.name == 'nt':
-                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('\\')[-1])
+                self.output_path = os.path.join(self.main_output, self.input_path.split('\\')[-1])
             else:
-                self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('/')[-1])
+                self.output_path = os.path.join(self.main_output, self.input_path.split('/')[-1])
             self._validate_create_output_path(self.output_path)
             if os.name == 'nt':
                 self.output_subpaths = [os.path.join(self.output_path, x.split('\\')[-1].split('.')[0])
@@ -143,10 +144,11 @@ if __name__ == "__main__":
     else:
         raise ValueError("You need to pass a valid output directory that exists or can be created after"
                          "-o <dir> or --output <dir>")
-    #
-    # print(input_dir)
-    # print(output_dir)
-    exp = ExperimentBuilder(input_dir)
+
+    if input_dir.endswith('/') or input_dir.endswith('\\'):
+        input_dir = input_dir[:-1]
+
+    exp = ExperimentBuilder(input_dir, output_dir)
     experiments = exp.get_experiment()
     for key, experiment in experiments.items():
         print(f'Running the following Experiment:\n{key}')
