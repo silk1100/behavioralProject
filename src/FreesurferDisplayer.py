@@ -8,7 +8,14 @@ viewer = {
     'surface':'surf'
 }
 
+
 class Viewer:
+    """
+    1. Take selected features file
+    2. Importance of feature vector
+    3. Color the surface based on a colormap
+
+    """
     def __init__(self, subjects_dir:str=None):
         self.main_sub_dir = os.environ['SUBJECTS_DIR'] if subjects_dir is None else subjects_dir
         self._get_all_subjects()
