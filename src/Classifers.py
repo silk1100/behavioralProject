@@ -6,6 +6,7 @@ from sklearn import clone
 import os
 import dill
 
+
 class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
 
     def __init__(self, class_name: str='nn', hyper_search_type:str='random', scoring:str='balanced_accuracy',

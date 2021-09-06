@@ -20,11 +20,11 @@ import constants
 class DataDivisor:
     def __init__(self, data: pd.DataFrame=None, phenofile: pd.DataFrame=None,
                  behavioral: str=None):
-        self.df = self._handle_data_input(data)
-
+        # self.df = self._handle_data_input(data)
+        self.df = None
         self.df_pheno = self._handle_pheno_input(phenofile)
-        if 'subj_id' in self.df_pheno.columns:
-            self.df_pheno.set_index('subj_id', inplace=True)
+        if 'subjectkey' in self.df_pheno.columns:
+            self.df_pheno.set_index('subjectkey', inplace=True)
 
         self.report_type = behavioral if behavioral is not None else 'srs'
         self.data_repr = 'medianMmedianP' if data is None else data
@@ -51,8 +51,8 @@ class DataDivisor:
         else:
             raise TypeError(f'pheno can be either None or dataframe')
 
-        if 'subj_id' in df.columns:
-            df.set_index('subj_id', inplace=True)
+        if 'subjectkey' in df.columns:
+            df.set_index('subjectkey', inplace=True)
             if 'Unnamed: 0' in df.columns:
                 df.drop('Unnamed: 0', axis=1, inplace=True)
         else:

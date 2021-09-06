@@ -29,7 +29,7 @@ class ExperimentBuilder:
                 self.output_path = os.path.join(constants.OUTPUT_DIR, self.input_path.split('/')[-1])
             self._validate_create_output_path(self.output_path)
             if os.name == 'nt':
-                self.output_subpaths = [os.path.join(self.output_path,x.split('\\')[-2], x.split('\\')[-1].split('.')[0])
+                self.output_subpaths = [os.path.join(self.output_path, x.split('\\')[-1].split('.')[0])
                                         for x in os.listdir(self.input_path) if x.endswith('.json')]
             else:
                 self.output_subpaths = [os.path.join(self.output_path, x.split('/')[-1].split('.')[0])
@@ -48,14 +48,14 @@ class ExperimentBuilder:
         return True
 
     def _validate_create_output_path(self, path):
-        if os.name == 'nt':
-            list_of_dir = path.split('\\')
-        else:
-            list_of_dir = path.split('/')
-        for idx, dir in enumerate(list_of_dir):
-            full_path = os.path.join(list_of_dir[:idx])
-            if not os.path.isdir(full_path):
-                os.mkdir(path)
+        # if os.name == 'nt':
+        #     list_of_dir = path.split('\\')
+        # else:
+        #     list_of_dir = path.split('/')
+        # for idx, dir in enumerate(list_of_dir):
+        #     full_path = os.path.join(list_of_dir[:idx])
+        if not os.path.isdir(path):
+            os.mkdir(path)
         return True
 
     def _read_experiments(self, exp_path):

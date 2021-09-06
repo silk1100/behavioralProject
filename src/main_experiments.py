@@ -144,7 +144,7 @@ class Experiment:
         plt.xlabel('Age')
         # plt.xticks([])
         plt.ylabel('PDF')
-        if self._expr_params ["DD"]["srs_type"] is not None:
+        if ('DD' in self._expr_params)and(self._expr_params ["DD"]["srs_type"] is not None):
             plt.title(f'Age distribution of {constants.SRS_TEST_NAMES_MAP[self._expr_params ["DD"]["srs_type"]]} with ASD as'
                   f' {self._expr_params ["DD"]["severity_group"]}')
         else:
@@ -382,6 +382,20 @@ class Experiment:
             if not data_repr_available:
                 raise ValueError(f'Data representation should be one of the following {list(constants.DATA_REPR_MAP.keys())}')
             group_df = pd.read_csv(constants.DATA_DIR[self.data_repr], index_col = 0)
+            
+            
+            
+            """
+            group_df_train = group_df.sample(frac=0.8, random_state=1234)
+            
+            Get the 20% rest of data into group_df_test
+            Save group_df_train, group_df_test
+            group_df = group_df_train
+            """
+            
+            
+            
+                        
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_beforeFixation.csv'))
             group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
 
@@ -394,6 +408,19 @@ class Experiment:
             # Normalizer to be refactored
             normalize = True if self.normalizer is not None else False
             Xselected, y, normalizer = self._FS_obj.run(group_df, normalizer=self.normalizer, normalize=normalize)
+            
+            
+            
+            """
+            # X_test = group_df_test.drop('DX_GROUP', axis=1)
+            # X_test = normalizer.transform(X_test)
+            # Xselect_test = self._FS_obj.transform(X_test)
+            # ytest = group_df_test['DX_GROUP']
+
+            """
+
+
+            
             self._plot_feature_importance(group_df, self._FS_obj.rfe_)
             self.FS_selected_feats_ =  self._FS_obj.selected_feats_
             self.FS_grid_scores_ = self._FS_obj.scores_
@@ -446,8 +473,11 @@ class Experiment:
             self.ML_grid_ = self._ML_obj.run(Xselected, y, est=list(Xselected.keys()) if isinstance(Xselected, dict)
                                                                                     else self._expr_params ['FS']['est'])
         utils.save_model(os.path.join(self.stampfldr_, "ML_obj"), self._ML_obj.grid)
+        # self.ML_grid_ = {
+        # 'lr': GridSearchCV.best_estimator_.predict(X)
+        # }
+        # self._save_ML_scores(Xselected, self.ML_grid_)
 
-        self._save_ML_scores(Xselected, self.ML_grid_)
 #         self.stampfldr_ = '..\\models\\20210527_220608'
 #         df = pd.read_csv(os.path.join(self.stampfldr_, 'group_df_afterFixation.csv'), index_col=0)
 #         with open(os.path.join(self.stampfldr_, 'FS_obj.p'), 'rb') as f:

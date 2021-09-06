@@ -38,7 +38,8 @@ ABIDEI_PREPROC_PATH = "/media/tarek/D/Autism/Structural_MRI/Abide_Preprocessed_D
 
 DATA_REPR_MAP = {
     'medianMmedianP': ['median', 'medianMmedianP', 'medianminusplus', 'medianIQR'],
-    'percentile': ['perc', 'percentile']
+    'percentile': ['perc', 'percentile'],
+    'corr':['correlation','corr','co']
 }
 
 
@@ -49,7 +50,8 @@ DATA_DIR = {
     'data_divisor':'../data/data_divisor',
     'medianMmedianP':'../data/feature_extraction/medianMinusPlus/raw.csv',
     'percentile':'../data/feature_extraction/percentile/raw.csv',
-    'pheno': '../data/updated_pheno.csv',
+    'corr':"../data/corr_featNAMES_agesex.csv",
+    'pheno': '../data/updated_pheno_yaser.csv',
 }
 
 
