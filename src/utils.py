@@ -108,7 +108,11 @@ def load_classifier_from_hyperparameterJson(json_fldr):
         print(full_path)
         with open(full_path, 'r') as f:
             data = json.load(f)
-        rfe_clc, ml_clc = file.split('_')
+        if file.endswith('.json'):
+            rfe_clc, ml_clc = file.split('.')[0].split('_')
+        else:
+            rfe_clc, ml_clc = file.split('_')
+
         clc = constants.CLC_DICT[ml_clc]()
         for x in clc.get_params().keys():
             if x not in data.keys():

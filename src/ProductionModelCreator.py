@@ -22,9 +22,14 @@ class RFEFeaturesBased(BaseEstimator, TransformerMixin):
             raise FileExistsError(f'There is no selected_feats.json inside {fldr}')
         self.selected_feats_json = os.path.join(fldr, 'selected_feats.json')
         
-        if not os.path.exists(os.path.join(fldr, 'group_df_beforeFixation.csv')):
-            raise FileExistsError(f'There is no group_df_beforeFixation.csv inside {fldr}')
-        self.df_dir = os.path.join(fldr, 'group_df_beforeFixation.csv')
+        if not os.path.exists(os.path.join(fldr, 'group_df_beforeFixation.csv')) and \
+                not os.path.exists(os.path.join(fldr, 'group_df_afterFixation.csv')):
+            raise FileExistsError(f'There is no group_df_beforeFixation.csv or group_df_afterFixation.csv inside {fldr}')
+        if os.path.exists(os.path.join(fldr, 'group_df_afterFixation.csv')):
+            self.df_dir = os.path.join(fldr, 'group_df_afterFixation.csv')
+        else:
+            self.df_dir = os.path.join(fldr, 'group_df_beforeFixation.csv')
+
 
         if not os.path.exists(os.path.join(fldr, 'pseudo_metrics.csv')):
             raise FileExistsError(f'There is no pseudo_metrics.csv inside {fldr}')
@@ -105,8 +110,9 @@ class ProductionModelCreator:
             elif 'SRS_' in col:
                 cols_2_del.append(col)
         df.drop(cols_2_del, axis=1, inplace=True)
-        X = df.drop('my_labels', axis=1)
-        y = df['my_labels'].values
+
+        X = df.drop('mylabels', axis=1)
+        y = df['mylabels'].values
         Xs = normalizer.transform(X)
         Xselected = rfe_obj.transform(Xs)
         ml_obj_new = clone(ml_obj)

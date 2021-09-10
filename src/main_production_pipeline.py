@@ -159,14 +159,14 @@ class BehavioralDiagnosis:
         return final_scores
 
 
-
 if __name__ == '__main__':
-    b = BehavioralDiagnosis()
+    b = BehavioralDiagnosis(models_dir='../selected_models_for_production/Agebetween10t13_severTD_alltests_minmax_percentile')
     # pipes = b._create_pipelines()
     # Prepare data to be used for testing
     # df = pd.read_csv('../notebooks/raw_data_for_production_testing.csv', index_col=0)
-    df = pd.read_csv('../notebooks/raw_data_perc_for_production_testing.csv', index_col=0)
-    
+    df = pd.read_csv('../notebooks/raw_data_perc_for_production_testing_1013.csv', index_col=0)
+
+
     srs_cols = [col for col in df.columns if 'SRS_' in col]
     df.dropna(inplace=True)
     original_labels = df['DX_GROUP'].values
