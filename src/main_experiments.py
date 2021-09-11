@@ -360,8 +360,11 @@ class Experiment:
             else:
                 group_df = self._DD_obj.run()
             group_df = group_df.sample(frac=1, random_state=132)
+            if self.DD_balance:
+                group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
+            else:
+                group_df.to_csv(os.path.join(self.stampfldr_, 'group_df_beforeFixation.csv'))
 
-            group_df.to_csv(os.path.join(self.stampfldr_,'group_df_afterFixation.csv'))
             if len(group_df.index) != group_df.index.nunique():
                 warnings.warn("There are duplicate subjects in the data after fixation")
 

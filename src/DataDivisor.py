@@ -72,12 +72,12 @@ class DataDivisor:
             if isinstance(data, pd.DataFrame):
                 df = data
             elif isinstance(data, str):
-                if 'median' in data:
+                if 'med' in data:
                     file_path = constants.DATA_DIR['medianMmedianP']
-                elif 'percentile' in data:
+                elif 'perc' in data:
                     file_path = constants.DATA_DIR['percentile']
                 else:
-                    raise ValueError(f'string represtation of data should be one of the following: {self.FEATURE_REPR}')
+                    raise ValueError(f'string represtation of data should be one of the following: {constants.DATA_REPR_MAP.keys()}')
                 df = pd.read_csv(file_path)
             else:
                 raise TypeError(f'{data} is expected to be the feature data frame, str to the type of features'
@@ -247,7 +247,7 @@ class DataDivisor:
                 # df_target = df_td.loc[(df_td['AGE_AT_SCAN ']>=lower_bound) & (df_td['AGE_AT_SCAN ']<=upper_bound),:]
                 df_target1 = df_td_G.loc[
                              (df_td_G['AGE_AT_SCAN '] >= lower_bound) & (df_td_G['AGE_AT_SCAN '] <= upper_bound), :]
-                n_samples = constants.DD_MIN_N_PER_CLASS if len(df_td_G)>constants.DD_MIN_N_PER_CLASS else len(df_td_G)
+                n_samples = constants.DD_MIN_N_PER_CLASS if len(df_target1)>constants.DD_MIN_N_PER_CLASS else len(df_target1)
                 group_diff = ASD_count-TD_count
                 if group_diff < n_samples:
                     df_added = df_target1.sample(group_diff, random_state=1)
@@ -269,15 +269,15 @@ class DataDivisor:
                 lower_bound = age_mean - age_std
                 df_target = df_asd.loc[
                             (df_asd['AGE_AT_SCAN '] >= lower_bound) & (df_asd['AGE_AT_SCAN '] <= upper_bound), :]
-                n_samples = constants.DD_MIN_N_PER_CLASS if len(df_asd)>constants.DD_MIN_N_PER_CLASS else len(df_asd)
+                n_samples = constants.DD_MIN_N_PER_CLASS if len(df_target)>constants.DD_MIN_N_PER_CLASS else len(df_target)
                 group_diff = TD_count-ASD_count
                 if group_diff < n_samples:
                     df_added = df_target.sample(group_diff, random_state=1)
                 else:
                     df_added = df_target.sample(n_samples, random_state=1)
 
-                df_added = df_added[df_group.columns]
                 df_added['mylabels'] = 1
+                df_added = df_added[df_group.columns]
                 df_group = pd.concat([df_group, df_added], axis=0)
             else:
                 raise TypeError("Group should be either ASD or TD")
@@ -318,12 +318,16 @@ class DataDivisor:
         else:
             ratio = ASD_count/(TD_count+ASD_count)
             more_ASd = False
-
+        index_all = []
+        for subjs in df_all.index:
+            if subjs not in df_group.index:
+                index_all.append(subjs)
+        df_all_exclude_group = df_all.loc[index_all,:]
         if ratio < 0.4:
             if more_ASd:
                 cat_group = get_key_corresponding_to_val(idx_label, 2)
                 if TD_count < constants.DD_MIN_N_PER_CLASS:
-                    df_group = add_subjects2balance(df_all, df_group, cat_group, converted_col_name, ASD_count, TD_count)
+                    df_group = add_subjects2balance(df_all_exclude_group, df_group, cat_group, converted_col_name, ASD_count, TD_count)
                     try:
                         ASD_count = df_group['mylabels'].value_counts()[1]
                     except Exception:
@@ -342,7 +346,8 @@ class DataDivisor:
                 cat_group = get_key_corresponding_to_val(idx_label, 1)
                 # Sample from ASD
                 if ASD_count < constants.DD_MIN_N_PER_CLASS:
-                    df_group = add_subjects2balance(df_all, df_group,cat_group, converted_col_name, ASD_count, TD_count)
+
+                    df_group = add_subjects2balance(df_all_exclude_group, df_group,cat_group, converted_col_name, ASD_count, TD_count)
                     try:
                         ASD_count = df_group['mylabels'].value_counts()[1]
                     except Exception:

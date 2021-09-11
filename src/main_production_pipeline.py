@@ -160,7 +160,7 @@ class BehavioralDiagnosis:
 
 
 if __name__ == '__main__':
-    b = BehavioralDiagnosis(models_dir='../selected_models_for_production/Agebetween10t13_severTD_alltests_minmax_percentile')
+    b = BehavioralDiagnosis(models_dir='../selected_models_for_production/Agebetween10t13_severTD_alltests_percentile')
     # pipes = b._create_pipelines()
     # Prepare data to be used for testing
     # df = pd.read_csv('../notebooks/raw_data_for_production_testing.csv', index_col=0)
@@ -185,4 +185,3 @@ if __name__ == '__main__':
     print(f'balanced accuracy : {balanced_accuracy_score(y_true=original_labels, y_pred=y_hat)}')
     print(f'f1 : {f1_score(y_true=original_labels, y_pred=y_hat)}')
     print(f'confusion matrix : {C}')
-    x=0
