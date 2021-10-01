@@ -6,6 +6,10 @@ import pandas as pd
 import nibabel.freesurfer as fs
 import os
 from collections import defaultdict
+
+from jsonschema._validators import const
+from numpy.ma import outer
+
 import constants
 import json
 
@@ -95,11 +99,13 @@ class Dataset:
     def describe(self):
         pass
 
-
-
 if __name__ == '__main__':
-    d = Dataset(constants.ABIDEII_PATH)
-    d.read_data()
+    # d = Dataset(constants.ABIDEII_PATH)
+    # d.read_data()
+    #
+    dd = Dataset(constants.FREESURFER_RANDOMSUBJ_PATH, output_dir='/home/tarek/PhD/real_data/output')
+    dd.read_data()
+
     # d.write_data_dict('./data_dict.json')
     # with open("./data_dict.json", 'r') as f:
     #     d = json.load(f)

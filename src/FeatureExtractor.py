@@ -121,4 +121,8 @@ class FeatureExtractor:
 
 if __name__ == "__main__":
     fs = FeatureExtractor('../data/raw')
-    fs.median_minus_plus_IQR()
+    # fs.median_minus_plus_IQR()
+
+    # fs = FeatureExtractor('/home/tarek/PhD/real_data/output')
+    # fs.median_minus_plus_IQR()
+    fs.extract_percentiles()

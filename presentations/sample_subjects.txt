@@ -1,0 +1,58 @@
+sample subjects = [OHSU_1_28927, SDSU_1_28862]
+OHSU_1_28927 = {
+	'comm': ASD,
+	'cog' : TD,
+	'MOT': ASD,
+	'AWA': ASD,
+	'MAN': ASD,
+	'TOT': ASD,
+	},
+	
+	scores = {
+	'comm': 96,
+	'cog' : 96,
+	'MOT': 89,
+	'AWA': 92,
+	'MAN': 85,
+	'TOT': 97,
+	},
+	'FD' : 'ASD',
+	'test_idx': 104
+}
+
+SDSU_1_28862 = {
+	pred = {
+	'comm': TD,
+	'cog' : TD,
+	'MOT': TD,
+	'AWA': TD,
+	'MAN': TD,
+	'TOT': TD,
+	},
+	
+	scores = {
+	'comm': 38,
+	'cog' : 36,
+	'MOT': 51,
+	'AWA': 39,
+	'MAN': 44,
+	'TOT': 40,
+	},
+	
+	'FD': 'TD',
+	
+	'test_idx': 211
+}
+
+
+General:
+	63 ASD detected out of 107
+	163 TD detected out of 163
+	High False negative rate
+	Specificity = 100%
+	sensitivity = 59%
+
+Suggests: 
+	Sever vs TD, if it says TD, then Moderate vs TD, if it says TD, then mild vs TD, if it says TD then it is TD. If it says ASD at any comparison then it is ASD to compensate the low sensitivity.
+
+overall_accuracy for sever vs TD is 79.4%

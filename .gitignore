@@ -8,3 +8,10 @@ src/.p
 selected_models_for_production/
 *.pyc
 output/
+presentations/*.png
+src/*.log
+src/.xdebug*
+report_data
+presentations/*.zip
+presentations/*.rar
+

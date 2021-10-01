@@ -35,6 +35,7 @@ AVAILABLE_CLASSIFIERS_MAP = {
 }
 ABIDEII_PATH = "/media/tarek/D/Autism/Structural_MRI/AbideII_FreeSurfer"
 ABIDEI_PREPROC_PATH = "/media/tarek/D/Autism/Structural_MRI/Abide_Preprocessed_Dataset"
+FREESURFER_RANDOMSUBJ_PATH = "/home/tarek/PhD/real_data"
 
 DATA_REPR_MAP = {
     'medianMmedianP': ['median', 'medianMmedianP', 'medianminusplus', 'medianIQR'],
@@ -76,7 +77,7 @@ CLC_DICT = {
     'xgb': XGBClassifier,
     'gnb': GaussianNB,
     'rf': RandomForestClassifier,
-    'svm': lambda: SVC(max_iter=MAX_ITR),
+    'svm': lambda: SVC(max_iter=MAX_ITR, probability=True),
     'nn': lambda: MLPClassifier(max_iter=MAX_ITR),
     'gradboost': GradientBoostingClassifier
 }
@@ -207,7 +208,7 @@ DATA_DIV_DIR = {
 """
 csv files with fewer number of subjects for testing the pipeline. Change it in DataDivisor._validity_srs_test_type()
 The main folder "../data/data_divisor_test/" is created manually but all the subdirectories and files are created via
-"../notebooks/create_data_divisor_test.ipynb".
+"../notebooks/05_create_data_divisor_test.ipynb".
 median csv files are created when you set the "percentile = False" in the second cell
 percentile csv files are created when you set the "percentile = True" in the second cell
 """

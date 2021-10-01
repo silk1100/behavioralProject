@@ -125,6 +125,7 @@ class BehavioralDiagnosis:
         self.predictions_ = {}
         for name, (pipe, score) in self.pipelines_dict_.items():
             self.predictions_[name] = pipe.predict(X)
+            print(f'test name: {name}, prediction: {self.predictions_[name]}')
         return self.predictions_
 
     def adjust_predictions(self, predictions, score):
@@ -160,13 +161,15 @@ class BehavioralDiagnosis:
 
 
 if __name__ == '__main__':
-    b = BehavioralDiagnosis(models_dir='../selected_models_for_production/Agebetween10t13_severTD_alltests_percentile')
-    # pipes = b._create_pipelines()
+    b = BehavioralDiagnosis(models_dir='../selected_models_for_production/Agebetween10t13_severTD_alltests_minmax_percentile')
+    pipes = b._create_pipelines()
     # Prepare data to be used for testing
     # df = pd.read_csv('../notebooks/raw_data_for_production_testing.csv', index_col=0)
     df = pd.read_csv('../notebooks/raw_data_perc_for_production_testing_1013.csv', index_col=0)
+    # df = pd.read_csv('../notebooks/raw_data_for_production_testing_1013.csv', index_col=0)
 
-
+    #
+    #
     srs_cols = [col for col in df.columns if 'SRS_' in col]
     df.dropna(inplace=True)
     original_labels = df['DX_GROUP'].values
@@ -174,14 +177,18 @@ if __name__ == '__main__':
     my_label_cols = [col for col in df.columns if 'severity_label' in col]
     labels = df[my_label_cols]
     X = df.drop(my_label_cols, axis=1)
+    # df = pd.read_csv('/home/tarek/PhD/real_data/output/perc.csv', index_col=0)
+    # X = df
+
     y_hat = b.predict(X, 'weighted_average')
+    print(f'final diagnosis: {y_hat}')
     C = confusion_matrix(original_labels, y_hat)
     tp = C[0, 0]
     tn = C[1, 1]
     fp = C[1, 0]
     fn = C[0, 1]
-    print(f'sensitivity: {recall_score(y_true=original_labels, y_pred=y_hat)}')
-    print(f'specificity : {tn / (tn + fp)}')
+    print(f'specificity: {recall_score(y_true=original_labels, y_pred=y_hat)}')
+    print(f'sensitivity : {tn / (tn + fp)}')
     print(f'balanced accuracy : {balanced_accuracy_score(y_true=original_labels, y_pred=y_hat)}')
     print(f'f1 : {f1_score(y_true=original_labels, y_pred=y_hat)}')
     print(f'confusion matrix : {C}')

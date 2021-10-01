@@ -27,6 +27,7 @@ from sklearn.metrics import (confusion_matrix, f1_score,accuracy_score,precision
                             recall_score, roc_auc_score, plot_roc_curve)
 from sklearn.base import clone
 
+
 class Experiment:
     def __init__(self, **experiment_params):
         self._expr_params = experiment_params
@@ -333,8 +334,6 @@ class Experiment:
             self._check_and_fill_expr_params( )
 
         utils.save_experiment_params(self.stampfldr_, self._expr_params )
-
-
 
         if 'DD' in self._expr_params:
             if 'median' not in self.data_repr:
