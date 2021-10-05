@@ -1,4 +1,5 @@
 import numpy as np
+from mayavi.tools.probe_data import probe_data
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from xgboost import XGBClassifier
 from sklearn.svm import LinearSVC, SVC
@@ -130,7 +131,7 @@ PARAM_GRID={
         'criterion':['gini','entropy'],
         'max_features':['auto','sqrt'],
         'min_samples_split':[2,5,10],
-        'min_samples_leaf':[0,0.1,0.2,0.3,0.4,0.5],
+        'min_samples_leaf':[0.0001,0.1,0.2,0.3,0.4,0.5],
         'bootstrap':[True,False]
 
     },
@@ -142,9 +143,9 @@ PARAM_GRID={
         'coef0':[0.0,0.01,0.5,5,50,100]
     },
     'nn':{
-        'hidden_layer_sizes': [(150,100,50,), (100,50,25,), (100,)],
-        'activation': ['tanh', 'relu', 'logistic'],
-        'solver': ['sgd', 'adam'],
+        'hidden_layer_sizes': [(200,), (150,), (100), (150,100,50,), (100,50,25,)],
+        'activation': ['relu'],
+        'solver': ['adam'],
         'alpha': [0.0001,0.001,0.01, 0.05, 0.1, 0.5],
         'learning_rate': ['constant','adaptive'],
         'beta_1':[0, 0.001, 0.01, 0.1, 0.3, 0.5, 0.9],

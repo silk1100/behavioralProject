@@ -201,6 +201,8 @@ class DataDivisor:
                 group = group[(age_group[0]<=group['AGE_AT_SCAN '])&(group['AGE_AT_SCAN ']<=age_group[1])]
                 # Should I limit the age group over the whole data?? !
                 df_ageLimited = df[(age_group[0]<=df['AGE_AT_SCAN '])&(df['AGE_AT_SCAN ']<=age_group[1])]
+                if len(df_ageLimited) < 10:
+                    raise ValueError(f"There are only {len(df_ageLimited)} subjects in the age group {age_group}")
             if gender is not None:
                 if gender in 'male' or gender.lower() == 'm' or gender == 1:
                     group = group[group['SEX']==1]
@@ -368,7 +370,6 @@ class DataDivisor:
 
         return df
 
-
     def run(self):
         # self.srs_type=None
         # self.severity_group=None
@@ -377,6 +378,10 @@ class DataDivisor:
         # self.divide_data=False
         if self.divide_data:
             self.divide()
+        if self.age_group is not None:
+            if (self.age_group[0] is not None) and (self.age_group[1] is None):
+                self.age_group[1] = self.df['AGE_AT_SCAN '].max()
+
         return self.get_group(self.srs_type, self.severity_group, self.age_group, self.gender)
 
 
