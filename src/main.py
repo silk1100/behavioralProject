@@ -132,15 +132,15 @@ def _validate_create_output_path(path):
 
 
 if __name__ == "__main__":
-    args = sys.argv
-    #
+    # args = sys.argv
+    # print(args)
     # if '-i' in args:
-    #     if _validate_input_path(args[args.index('-i')+1]):
+    #     if args[args.index('-i')+1]:
     #         input_dir = args[args.index('-i')+1]
     # elif '--input' in args:
-    #     if _validate_input_path(args[args.index('--input') + 1]):
-    #         input_dir = args[args.index('-i')+1]
-    # elif _validate_input_path(args[1]):
+    #     if args[args.index('--input') + 1]:
+    #         input_dir = args[args.index('--input')+1]
+    # elif args[1]:
     #     input_dir = args[1]
     # else:
     #     raise ValueError("You need to pass an input directory with all experiments within it as the first argument or"
@@ -158,8 +158,11 @@ if __name__ == "__main__":
     #     raise ValueError("You need to pass a valid output directory that exists or can be created after"
     #                      "-o <dir> or --output <dir>")
 
-    input_dir = '../experiments/'
+    input_dir = '../experiments/mild_TD/AgebetweenNonetNone_mild_TD_percentile_minmax'
     output_dir = "../output/"
+    print(output_dir)
+    print(input_dir)
+
     if input_dir.endswith('/') or input_dir.endswith('\\'):
         input_dir = input_dir[:-1]
 

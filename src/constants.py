@@ -1,5 +1,4 @@
 import numpy as np
-from mayavi.tools.probe_data import probe_data
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from xgboost import XGBClassifier
 from sklearn.svm import LinearSVC, SVC
