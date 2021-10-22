@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 declare -a output
 
 #######################################
@@ -29,8 +29,8 @@ fldrs="$(search_dirs ./experiments)"
 cnt=1
 for fld in $fldrs
 do
-    stats="$(echo "#!/bin/bash
+    stats="$(echo "#!/usr/bin/bash
 cd /home/tarek/PhD/behavioral_project/src
-python ./main.py -i .$fld -o './output'" > sample_$cnt.sh)"
+python ./main.py -i .$fld -o ../output" > sample_$cnt.sh)"
     ((cnt+=1))
 done
