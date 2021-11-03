@@ -1,0 +1,15 @@
+name: brain_torch
+channels:
+  - defaults
+dependencies:
+  - matplotlib
+  - scipy
+  - pandas
+  - scikit-learn
+  - seaborn
+  - numpy
+  - ujson
+  - dill
+  - xgboost
+  - ipython
+prefix: /home/mtali003/.conda/envs/brain_torch
