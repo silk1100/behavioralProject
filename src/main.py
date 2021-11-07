@@ -3,6 +3,9 @@ import os
 import constants
 import json
 from collections import defaultdict
+import MyThread
+import sys
+
 
 class ExperimentBuilder:
     def __init__(self, exp_input, output_dir=None):
@@ -96,7 +99,7 @@ class ExperimentBuilder:
     def get_experiment(self):
         return self.experiment_dict
 
-import sys
+
 def main(*args, **kwargs):
     if kwargs['-i'] or kwargs['--input']:
         pass
@@ -168,6 +171,7 @@ if __name__ == "__main__":
 
     exp = ExperimentBuilder(input_dir, output_dir)
     experiments = exp.get_experiment()
+    threads_list = []
     for input_path, experiment_output_dict in experiments.items():
         output_path = experiment_output_dict['output']
         experiment = experiment_output_dict['data']
@@ -175,7 +179,8 @@ if __name__ == "__main__":
         print(f'Running the following Experiment:\n{input_path}')
         e = Experiment(**experiment)
         try:
-            e.run()
+            # e.run()
+            threads_list.append(MyThread())
         except Exception as e:
             print(f"\n\nFollowing error was found during processing {input_path}\n{e}\n\n")
             continue
