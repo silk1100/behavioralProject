@@ -6,6 +6,7 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassif
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
+from lightgbm import LGBMClassifier
 
 FREESURFER_FEATS_FILES = {
     'area': ['surf/lh.area', 'surf/rh.area'],
@@ -31,7 +32,8 @@ AVAILABLE_CLASSIFIERS_MAP = {
     'sgd': ['sgd', 'stochastic gradient descend'],
     'knn': ['knn', 'neighbors', 'k-nn'],
     'rf': ['rf', 'random forest'],
-    'gradboost': ['gradboost','gradient trees', 'gradient boost trees', 'gbt']
+    'gradboost': ['gradboost','gradient trees', 'gradient boost trees', 'gbt'],
+    'lgbm':['lgbm','gbm', 'lightgbm']
 }
 ABIDEII_PATH = "/media/tarek/D/Autism/Structural_MRI/AbideII_FreeSurfer"
 ABIDEI_PREPROC_PATH = "/media/tarek/D/Autism/Structural_MRI/Abide_Preprocessed_Dataset"
@@ -79,7 +81,8 @@ CLC_DICT = {
     'rf': RandomForestClassifier,
     'svm': lambda: SVC(max_iter=MAX_ITR, probability=True),
     'nn': lambda: MLPClassifier(max_iter=MAX_ITR),
-    'gradboost': GradientBoostingClassifier
+    'gradboost': GradientBoostingClassifier,
+    'lgbm': lambda: LGBMClassifier(boosting_type='gbdt', objective='binary', n_jobs=-1)
 }
 PARAM_GRID={
     'lsvm': {
@@ -160,6 +163,14 @@ PARAM_GRID={
         'min_samples_leaf':np.arange(1,10,1),
         'max_depth':np.arange(3,50,1),
         'warm_start':[True],
+    },
+    'lgbm':{
+        'reg_alpha':np.arange(0,5,0.1),
+        'reg_lambda':np.arange(0,5,0.1),
+        'n_estimators':np.arange(100,5000,50),
+        'learning_rate':np.arange(0.01,1,0.01),
+        'max_depth':np.arange(1, 10),
+        'num_leaves':np.arange(3, 32)
     }
 }
 

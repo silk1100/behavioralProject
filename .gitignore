@@ -16,4 +16,5 @@ src/.xdebug*
 report_data
 presentations/*.zip
 presentations/*.rar
-
+experiments/
+experiments_testing/

@@ -81,10 +81,10 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
     def _set_single_grid(self, est, key):
         if self.hyper_search_type in 'random':
             grid = RandomizedSearchCV(est, param_distributions=constants.PARAM_GRID[key],scoring=self.scoring,
-                                           n_iter=self.n_iter, n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose)
+                                           n_iter=self.n_iter, n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose, error_score=0.0)
         elif self.hyper_search_type in 'exhaustive':
             grid = GridSearchCV(est, param_grid=constants.PARAM_GRID[key], scoring=self.scoring,
-                                     n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose)
+                                     n_jobs=self.n_jobs, cv=self.cv, verbose=self.verbose, error_score=0.0)
         else:
             raise ValueError("hyper_search_type can only be either random or exhaustive")
         return grid

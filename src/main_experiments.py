@@ -15,11 +15,11 @@ import matplotlib.style as style
 style.use('ggplot')
 import numpy as np
 import seaborn as sns
-import matplotlib
+import matplotlib as mpl
 font = {'family' : 'normal',
         'weight' : 'bold',
         'size'   : 14}
-matplotlib.rc('font', **font)
+mpl.rc('font', **font)
 import json
 from collections import defaultdict
 from sklearn.model_selection import train_test_split

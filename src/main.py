@@ -3,7 +3,7 @@ import os
 import constants
 import json
 from collections import defaultdict
-import MyThread
+from MyThread import MyThread
 import sys
 
 
@@ -162,6 +162,7 @@ if __name__ == "__main__":
                          "-o <dir> or --output <dir>")
 
     # input_dir = '../experiments/mild_TD/AgebetweenNonetNone_mild_TD_percentile_minmax'
+    # input_dir = '../experiments_testing/mild_TD/AgebetweenNonetNone_mild_TD_percentile_minmax/'
     # output_dir = "../output/"
     print(output_dir)
     print(input_dir)
@@ -172,18 +173,51 @@ if __name__ == "__main__":
     exp = ExperimentBuilder(input_dir, output_dir)
     experiments = exp.get_experiment()
     threads_list = []
+
+    ################################################################
+    ##################### OLD LOOP #################################
+    ################################################################
+
+    # for input_path, experiment_output_dict in experiments.items():
+    #     output_path = experiment_output_dict['output']
+    #     experiment = experiment_output_dict['data']
+    #     experiment['output'] = output_path
+    #     print(f'Running the following Experiment:\n{input_path}')
+    #     e = Experiment(**experiment)
+    #     try:
+    #         # e.run()
+    #         threads_list.append(MyThread())
+    #     except Exception as e:
+    #         print(f"\n\nFollowing error was found during processing {input_path}\n{e}\n\n")
+    #         continue
+    #     print(f'Saving experiment in: {output_path}')
+    # exp1 = Experiment(**experiment_1)
+    # exp1.run()
+
+    ################################################################
+    ##################### New loop with multithreading #############
+    ################################################################
+    thread_id = 0
     for input_path, experiment_output_dict in experiments.items():
         output_path = experiment_output_dict['output']
         experiment = experiment_output_dict['data']
         experiment['output'] = output_path
-        print(f'Running the following Experiment:\n{input_path}')
+        # print(f'Running the following Experiment:\n{input_path}')
         e = Experiment(**experiment)
-        try:
-            # e.run()
-            threads_list.append(MyThread())
-        except Exception as e:
-            print(f"\n\nFollowing error was found during processing {input_path}\n{e}\n\n")
-            continue
-        print(f'Saving experiment in: {output_path}')
-    # exp1 = Experiment(**experiment_1)
-    # exp1.run()
+        threads_list.append(
+            MyThread(thread_id, f'{input_path} --> {output_path}', e.run)
+        )
+        # try:
+        #     # e.run()
+        #     threads_list.append(MyThread())
+        # except Exception as e:
+        #     print(f"\n\nFollowing error was found during processing {input_path}\n{e}\n\n")
+        #     continue
+        # print(f'Saving experiment in: {output_path}')
+    for t in threads_list:
+        t.start()
+
+    for t in threads_list:
+        t.join()
+
+    print('End my misery')

@@ -13,7 +13,7 @@ class MyThread(threading.Thread):
         try:
             self.fnc()
         except:
-            pass
+            print(f'Couldnt process {self.name}')
         print(f'Finished {self.name}')
 
 
