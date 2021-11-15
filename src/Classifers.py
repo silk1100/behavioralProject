@@ -1,6 +1,6 @@
 import constants
 import sklearn.base as base
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, StratifiedKFold
 from collections import defaultdict
 from sklearn import clone
 import os
@@ -103,6 +103,9 @@ class CustomClassifier(base.BaseEstimator, base.ClassifierMixin):
             if key == 'est':
                 setattr(self, 'est', self._handle_estimator(val)[0])
                 setattr(self, '_clc_key', self._handle_estimator(val)[1])
+            elif key == 'cv':
+                cv = StratifiedKFold(val, shuffle=True, random_state=104)
+                setattr(self, key, cv)
             elif key in self.__dict__.keys():
                 setattr(self, key, val)
             else:

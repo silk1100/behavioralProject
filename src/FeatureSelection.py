@@ -10,6 +10,7 @@ import os
 import dill
 from warnings import warn
 
+
 class FeatureSelector(SelectorMixin, base.BaseEstimator):
     def __init__(self, est='lsvm', selector_method='rfe'):
         self.est = self._handle_estimator(est)
@@ -145,6 +146,9 @@ class FeatureSelector(SelectorMixin, base.BaseEstimator):
             if key in self.__dict__.keys():
                 if key == 'est':
                     setattr(self, 'est', self._handle_estimator(val))
+                elif key == 'cv':
+                    cv = StratifiedKFold(val, shuffle=True, random_state=103)
+                    setattr(self, key, cv)
                 else:
                     setattr(self, key, val)
             else:
