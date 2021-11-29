@@ -487,7 +487,6 @@ class Experiment:
         with open(os.path.join(self.stampfldr_, fname+'.p'), 'wb') as f:
             dill.dump(self, f)
 
-
 if __name__ == "__main__":
 
     experiment_1 = Experiment(**exp_params)
