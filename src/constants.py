@@ -8,6 +8,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from lightgbm import LGBMClassifier
 
+
 FREESURFER_FEATS_FILES = {
     'area': ['surf/lh.area', 'surf/rh.area'],
     'curv': ['surf/lh.curv', 'surf/rh.curv'],
@@ -53,6 +54,7 @@ DATA_DIR = {
     'medianMmedianP':'../data/feature_extraction/medianMinusPlus/raw.csv',
     'percentile':'../data/feature_extraction/percentile/raw.csv',
     'pheno': '../data/updated_pheno.csv',
+    'phase2': '../notebooks/raw_data_perc_for_production_testing.csv'
 }
 
 
@@ -63,6 +65,9 @@ MODELS_DIR = {
 }
 
 OUTPUT_DIR = "../output"
+OUTPUT_DIR_CLUSTER = "../output/bigdatacluster/randomizedOutput"
+BEST_RESULTS_JSON = "../notebooks/best_results_dict.json"
+
 
 MAX_ITR = int(1e9)
 
@@ -102,7 +107,7 @@ PARAM_GRID={
     'lr':{
         'penalty': ['l1','l2','elasticnet','none'],
         'C':[0.1,1,5, 10],
-        'solver':['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+        # 'solver':['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
     },
     'xgb': {
         'booster':['gbtree','gblinear','dart'],

@@ -1,0 +1,9 @@
+** DO on 11/30/2021
+* Create a script to:
+	* copy experiment_adj5 in the same directoy with number>10 as many times as possible with name experiment_adj{number}
+	* Edit sample_1.sh, sample_2.sh, sample_3.sh to include experiment_adj{number} in their input
+	* create a folder output/experiment_adj{number}
+	* run `bash main_exp.sh`
+* Edit src/main.py to accept output folders other than ../output
+* Create a script to analyze rfeObj.p for every experiment
+* Write the Phase I section in the materials and methods of the paper on overleaf.
