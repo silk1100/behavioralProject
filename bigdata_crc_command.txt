@@ -1,6 +1,18 @@
-batch main_perc.sh --job-name=realjob --time=48:00:00 -cpus-per-task=12 -o ~/temp.txt --begin=0
+# Main command to run in the terminal for a compute task
+sbatch main_perc.sh --job-name=realjob --time=48:00:00 -cpus-per-task=12 -o ~/temp.txt --begin=0
+
+# Main command to run in the terminal for a gpu task
+sbatch main_perc.sh --job-name=realjob --time=3-23:59:59 --begin=0 
+
 
 What is writter inside main.sh
 #!/bin/sh
 python main.py -i ../experiments/Agebetween10t13_severTD_alltests/ -o ../output/Agebetween10t13_severTD_alltests/
+
+
+########################################
+To create an interactive instance with a gpu node or compute node. (Mainly to ensure that your code will start off without any errors)
+
+srun --time=48:00:00 -p compute -c 1 --pty bash   # Run an instance from the compute nodes for 48 hours with a bash interactive window
+srun --time=48:00:00 -p gpu -c 1 --pty bash   # Run an instance from the gpu nodes for 48 hours with a bash interactive window
 
