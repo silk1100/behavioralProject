@@ -88,10 +88,12 @@ class Phase2:
         best_score = 0
         best_estimator = None
         best_clc = None
+        best_params = None
         for clc, grid in self.ML_grid['None'].items():
             if grid.best_score_ > best_score:
                 best_score = grid.best_score_
                 best_estimator = grid.best_estimator_
+                best_params = grid.best_params_
                 best_clc = clc
 
         print(f"Highest score is {best_score} for {best_clc}")
@@ -101,6 +103,7 @@ class Phase2:
         print(f"recall score: {recall_score(ytest, yhat)}")
         print(f"balanced acc score: {balanced_accuracy_score(ytest, yhat)}")
         print(f"confusion matrix: {confusion_matrix(ytest, yhat)}")
+        print(f"best params: {best_params}")
 
     def fit(self, X, y):
         pass
@@ -112,9 +115,9 @@ def main():
             'lr',
             'xgb',
             'rf',
-            'nn'
-            # "svm",
-            # "lgbm",
+            'nn',
+            "svm",
+            "lgbm",
             # "nn"
         ],
         "cv": 5,

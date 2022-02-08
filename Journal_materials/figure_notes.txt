@@ -1,0 +1,20 @@
+
+Figure 1: Proposed system
+	The first 2 blocks need to be shifted little bit down.
+	[Dr. Nakieb] Fonts inside figure are small, especially feature extraction. Keep aspect ratio of preprocessing figures since it is refer to in preprocessing section.
+	[Suggesion] split the main system into 3 blocks (preprocessing, phaseI, and phase II). Create a diagram connecting all of them together, and then we create an individual figure for each one of them.
+	[Modification] Add an iteratable module over phase I to represent the 50 iterations.
+
+Figure 3: Bar plot demosntrating
+	The labels of x-axis text are truncated. Figure height needs to be adjusted
+
+[New Figure][Preprocessing][Intensity Normalization]\
+	Create a flowchart similar to the one we did in the diagnostics paper to demonstrate the steps of the intensity normalization steps.
+
+[New Figure][Building neuro atlas] 
+	Create a flowchart to replace the algorithm (to avoid plagirism)
+
+[New Figure][ML classifiers] 
+	Create a flowchart to replace the algorithm (to avoid plagirism)
+
+
