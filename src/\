@@ -1,0 +1,83 @@
+import numpy as np
+import pandas as pd
+import dill
+import json
+from collections import defaultdict
+import matplotlib.pyplot as plt
+import os
+import seaborn as sns
+sns.set()
+
+MAIN_DIR = "../output/bigdatacluster/randomizedOutput"
+OUTPUT_DIR = "./.neuroatlas_results"
+experiment_folders = [x for x in os.listdir(MAIN_DIR) if os.path.isdir(os.path.join(MAIN_DIR, x))]
+
+def create_exp_result_df(expr_fldrs):
+    data_dict = defaultdict(list)
+    for experiment in expr_fldrs:
+        full_dir = os.path.join(MAIN_DIR, experiment)
+        for severity_dir in [x for x in os.listdir(full_dir) if os.path.isdir(os.path.join(full_dir, x))]:
+            full_seve_dir = os.path.join(full_dir, severity_dir, f"AgebetweenNonetNone_{severity_dir}_percentile_minmax")
+            for beh_dir in [x for x in os.listdir(full_seve_dir) if os.path.isdir(os.path.join(full_seve_dir, x))]:
+                full_beh_dir = os.path.join(full_seve_dir, beh_dir)
+
+                df_pseudo = pd.read_csv(os.path.join(full_beh_dir, "pseudo_metrics.csv"))
+                df_pseudo['avg'] = df_pseudo[['acc','f1']].mean(axis=1)
+                best_rfe, best_clc = df_pseudo[['RFE','Metrics']].iloc[df_pseudo['avg'].argmax()]
+
+                with open(os.path.join(full_beh_dir, "selected_feats.json"), 'r') as f:
+                    rfe_dict = json.load(f)
+                feats = rfe_dict[best_rfe]
+
+                with open(os.path.join(full_beh_dir, "ML_obj.p"), 'rb') as f:
+                    ML_obj = dill.load(f)
+
+                clc = ML_obj[best_rfe][best_clc]
+                data_dict['exp'].append(experiment)
+                data_dict['sev'].append(severity_dir)
+                data_dict['beh'].append(beh_dir.split('_')[-1])
+                data_dict['rfe'].append(best_rfe)
+                data_dict['clc'].append(best_clc)
+                data_dict['feats'].append(feats)
+                data_dict['hyper_params'].append(clc.best_params_)
+                data_dict['clc_score'].append(clc.best_score_)
+                data_dict['pseudo_acc'].append(df_pseudo['acc'].iloc[df_pseudo['avg'].argmax()])
+                data_dict['pseudo_f1'].append(df_pseudo['f1'].iloc[df_pseudo['avg'].argmax()])
+
+                df_results = pd.DataFrame(data_dict)
+    return df_results
+
+
+def create_best_data_dict(df):
+    def get_best_severity_behavioral(df, sev, beh):
+        sub_df = df[(df['sev']==sev)&(df['beh']==beh)]
+        sub_df['tot'] =  (sub_df['clc_score']+ sub_df['pseudo_acc'] + sub_df['pseudo_f1'])/3 - len(sub_df['feats'])/1088
+        return sub_df.iloc[sub_df['tot'].argmax()]
+
+    best_data_dict = defaultdict(dict)
+    for sev in ['mild_TD', 'moderate_TD', 'sever_TD']:
+        for beh in ['awa','comm','man','cog','mot', 'tot']:
+            best_data_dict[sev][beh] = get_best_severity_behavioral(df_results_clean, sev, beh).to_dict()
+
+    with open(os.path.join(OUTPUT_DIR, 'best_results_dict.json'), 'w') as f:
+        json.dump(best_data_dict, f)
+
+    return best_data_dict
+
+
+
+
+if __name__ == "__main__":
+    # Read and load df_results and df_results_clean
+    if not os.path.exists(os.path.join(OUTPUT_DIR, 'df_results.csv')):
+        df_results = create_exp_result_df(experiment_folders)
+        df_results_clean = df_results[(df_results['clc_score']>0.8)&(df_results['pseudo_acc']>0.8)&(df_results['pseudo_f1']>0.7)]
+        df_results.to_csv(os.path.join(OUTPUT_DIR, 'df_results.csv'))
+        df_results_clean.to_csv(os.path.join(OUTPUT_DIR, 'df_results_clean.csv'))
+    else:
+        df_results = pd.read_csv(os.path.join(OUTPUT_DIR, 'df_results.csv'), index_col=0)
+        df_results_clean = pd.read_csv(os.path.join(OUTPUT_DIR, 'df_results_clean.csv'), index_col=0)
+
+    best_data_dict = create_best_data_dict(df_results_clean)
+
+    print(best_data_dict)

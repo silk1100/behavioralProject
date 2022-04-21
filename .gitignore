@@ -18,3 +18,4 @@ presentations/*.zip
 presentations/*.rar
 experiments/
 experiments_testing/
+src/.neuroatlas_results/

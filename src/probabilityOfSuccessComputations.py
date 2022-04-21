@@ -1,7 +1,7 @@
 def main():
     # User input
-    p = [108/1088, 133/1088, 320/1088, 97/1088]
-    
+    # p = [108/1088, 133/1088, 320/1088, 97/1088]
+    p = [1/6 for _ in range(10)]   
     # Algorithm implementation
     q = [1-pi for pi in p]
     p = [(f"p{i}", pr) for i, pr in enumerate(p)]
@@ -12,8 +12,11 @@ def main():
     
     
     # Print output
+    # print(sum(propSum))
+    print(symb)
     print(sum(propSum))
     x=0
+    
 
 
 def create_prob(p, q, k, included, symbSum=[], propSum=[]):
@@ -38,7 +41,6 @@ def create_prob(p, q, k, included, symbSum=[], propSum=[]):
 
         symb, prob = create_prob(p, q, k, included, symbSum=symbSum, propSum=propSum)
         if symb not in symbSum:
-            print(prob)
             symbSum.append(symb)
             propSum.append(prob)
 
@@ -47,5 +49,5 @@ def create_prob(p, q, k, included, symbSum=[], propSum=[]):
     return symb, prob  
 
 
-
-main()
+if __name__ == "__main__":
+    main()
