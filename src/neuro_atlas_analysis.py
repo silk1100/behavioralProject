@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import numpy as np
 from probabilityOfSuccessComputations import create_prob
 import pandas as pd
@@ -7,7 +8,9 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import os
 import seaborn as sns
+from math import comb
 sns.set()
+
 
 """
 CONSTANTS
@@ -269,14 +272,57 @@ def _an2_countFeatSel(df_results_clean, sev, beh, feat):
             k+=1
     return n_exp, count_list, k
 
-def analysis2(best_data_dict, df_results_clean):
+def get_exp_feats_cntr(df_results_clean, sev, beh):
+    sev_beh_featsCntr = dict()
+    df_res = df_results_clean[(df_results_clean['sev']==sev)&(df_results_clean['beh']==beh)]
+    df_res['feats'] = df_res['feats'].apply(_parse_feats_as_list)
+    n_exp = len(df_res)
+    nFeats_list = []
+    cnt = -1
+    for idx, row in df_res.iterrows():
+        nFeats_list.append(len(row['feats']))
+        cnt += 1
+        for i, feat in enumerate(row['feats']):
+            cnt, ll = sev_beh_featsCntr.get(feat, (0, []))
+            ll.append(cnt)
+            sev_beh_featsCntr[feat] = (cnt+1,ll) 
+            
+    
+    return sev_beh_featsCntr, n_exp, nFeats_list
+
+
+def analysis_2(best_data_dict, df_results_clean):
     """
     Statistical analysis to calculate the significance of each feature in the corresponding neuro atlas
     """
+    sig_sev_beh_dict = {}
     for sev, sev_dict in best_data_dict.items():
+        sig_sev_beh_dict[sev] = {}
         for beh, beh_dict in sev_dict.items():
-            
+            sig_sev_beh_dict[sev][beh] = []
+            sev_beh_featsCntr, n_exp, nFeats_list = get_exp_feats_cntr(df_results_clean, sev, beh)
+            prob_list = np.array(nFeats_list)/1088
+            sig_feats_cntr = {}
+            n_sigs = 0
+            for feat in _parse_feats_as_list(beh_dict['feats']):
+                cnt, ll = sev_beh_featsCntr.get(feat, (0, []))
+                if cnt==0 or len(ll)==0:
+                    raise ValueError(f"{sev} and {beh} has {feat} in the neuroatlas and 0 existance in the experiments")
+                probs = prob_list[ll]
+                p = probs.max()
+                q =  1-p
+                k = cnt
+                sig = comb(n_exp, k) * (p**k) *(q**(n_exp-k))
+                if sig<0.001:
+                    n_sigs += 1 
+                    cnt = sig_feats_cntr.get(feat, 0)
+                    sig_feats_cntr[feat] = cnt+1
+                    sig_sev_beh_dict[sev][beh].append(feat) 
 
+            # morph_cntr,hemi_cntr, bname_cntr, agg_cntr = feats_parts_cntr(sig_feats_cntr)
+            print(sig_sev_beh_dict)
+    
+    save_dict(sig_sev_beh_dict, os.path.join(OUTPUT_DIR, "sig_sev_beh_dict.json"))
 
 
 if __name__ == "__main__":
@@ -327,4 +373,4 @@ if __name__ == "__main__":
     # analysis_1(best_data_dict, sev='sever_TD', beh='cog')
 
 
-    analysis2(best_data_dict, df_results_clean)
+    analysis_2(best_data_dict, df_results_clean)
